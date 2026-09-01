@@ -12,6 +12,14 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentWeekType = 'numerator';
   let selectedDay = 1;
 
+  if ('caches' in window) {
+    caches.keys().then(keys => {
+      keys.forEach(k => {
+        if (k !== 'schedule-plus-v0.3') caches.delete(k);
+      });
+    });
+  }
+
   // DOM Elements
   const weekInputs = document.querySelectorAll('input[name="week-type"]');
   const dayTabs = document.querySelectorAll('.day-tab');
@@ -21,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const metaThemeColor = document.getElementById('meta-theme-color');
 
   // Load Data
-  fetch('assets/schedule.json')
+  fetch(`assets/schedule_test.json?v=${Date.now()}`)
     .then(res => res.json())
     .then(data => {
       scheduleData = data;
@@ -33,6 +41,20 @@ document.addEventListener('DOMContentLoaded', () => {
     initTheme();
     calculateCurrentWeekAndDay();
     setupEventListeners();
+    renderGroupList();
+
+    let savedGroup = localStorage.getItem('selected_group');
+    if ((!savedGroup || !scheduleData.schedule[savedGroup]) && scheduleData && scheduleData.schedule) {
+      savedGroup = scheduleData.schedule['КІБ-25011б'] ? 'КІБ-25011б' : Object.keys(scheduleData.schedule)[0];
+      localStorage.setItem('selected_group', savedGroup);
+    }
+    
+    if (savedGroup) {
+      document.querySelectorAll('.selected-group-name').forEach(el => {
+        el.textContent = savedGroup;
+      });
+    }
+
     renderSchedule();
     checkNotificationStatus();
     registerServiceWorker();
@@ -40,10 +62,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function calculateCurrentWeekAndDay() {
     const now = new Date();
-    
+
     // Day of week: 0 is Sunday, 1 is Monday ... 6 is Saturday
     let dayOfWeek = now.getDay();
-    
+
     // If weekend (0 or 6), jump to next Monday
     let dateForCalc = new Date(now.getTime());
     if (dayOfWeek === 0) {
@@ -58,11 +80,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Reset dateForCalc to midnight for accurate week calc
     dateForCalc.setHours(0, 0, 0, 0);
-    
+
     const diffTime = dateForCalc.getTime() - START_DATE.getTime();
     const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
     const currentWeekNumber = Math.floor(diffDays / 7);
-    
+
     // Even week (0, 2, 4...) -> Numerator, Odd week (1, 3, 5...) -> Denominator
     currentWeekType = (currentWeekNumber % 2 === 0) ? 'numerator' : 'denominator';
 
@@ -160,11 +182,134 @@ document.addEventListener('DOMContentLoaded', () => {
     notifyToggleBtns.forEach(btn => {
       btn.addEventListener('click', handleNotifyToggle);
     });
+
+    // Group Selection Modal (Option A)
+    const desktopGroupBtn = document.getElementById('desktopGroupBtn');
+    const mobileGroupBtn = document.getElementById('mobileGroupBtn');
+    const groupModalBackdrop = document.getElementById('groupModalBackdrop');
+    const closeGroupModal = document.getElementById('closeGroupModal');
+    const groupModal = document.getElementById('groupModal');
+
+    function openModal() {
+      if (groupModalBackdrop) groupModalBackdrop.classList.add('open');
+    }
+
+    function closeModal() {
+      if (groupModalBackdrop) groupModalBackdrop.classList.remove('open');
+    }
+
+    if (desktopGroupBtn) desktopGroupBtn.addEventListener('click', openModal);
+    if (mobileGroupBtn) mobileGroupBtn.addEventListener('click', openModal);
+    if (closeGroupModal) closeGroupModal.addEventListener('click', closeModal);
+
+    if (groupModalBackdrop) {
+      groupModalBackdrop.addEventListener('click', (e) => {
+        if (e.target === groupModalBackdrop) closeModal();
+      });
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && groupModalBackdrop && groupModalBackdrop.classList.contains('open')) {
+        closeModal();
+      }
+    });
+
+    // Course chip switching
+    const courseChips = document.querySelectorAll('.course-chip');
+    const searchInput = document.getElementById('groupSearchInput');
+    
+    let currentCourseFilter = 'all';
+    let currentSearchQuery = '';
+
+    courseChips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        courseChips.forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        currentCourseFilter = chip.dataset.course;
+        renderGroupList(currentCourseFilter, currentSearchQuery);
+      });
+    });
+
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        currentSearchQuery = e.target.value;
+        renderGroupList(currentCourseFilter, currentSearchQuery);
+      });
+    }
+  }
+
+  function renderGroupList(filterCourse = 'all', searchQuery = '') {
+    const groupListEl = document.getElementById('groupList');
+    if (!groupListEl || !scheduleData || !scheduleData.schedule) return;
+
+    groupListEl.innerHTML = '';
+    
+    const selectedGroup = localStorage.getItem('selected_group') || Object.keys(scheduleData.schedule)[0];
+    
+    // Convert schedule object to array
+    const groups = Object.entries(scheduleData.schedule).map(([name, data]) => ({
+      name,
+      course: data.course || '',
+      specialty: data.specialty || ''
+    }));
+
+    // Filter
+    const query = searchQuery.toLowerCase();
+    const filteredGroups = groups.filter(g => {
+      // For masters, chip has "магістр", excel has "1р.н." or something else for course?
+      // Let's just do a substring match.
+      let matchCourse = false;
+      if (filterCourse === 'all') {
+        matchCourse = true;
+      } else if (filterCourse === 'магістр') {
+        matchCourse = g.course.toLowerCase().includes('м') || g.course.toLowerCase().includes('магістр') || g.name.toLowerCase().includes('м');
+      } else {
+        // e.g. "2 курс" -> matches "2 курс"
+        matchCourse = g.course.toLowerCase().includes(filterCourse.toLowerCase().replace(' курс', ''));
+      }
+
+      const matchSearch = g.name.toLowerCase().includes(query) || g.specialty.toLowerCase().includes(query);
+      return matchCourse && matchSearch;
+    });
+
+    if (filteredGroups.length === 0) {
+      groupListEl.innerHTML = `<div class="day-empty" style="padding: 20px 0; color: var(--color-ash); font-size: 13px; text-align: center;"><span>Нічого не знайдено</span></div>`;
+      return;
+    }
+
+    filteredGroups.forEach(g => {
+      const btn = document.createElement('button');
+      btn.className = `group-item ${g.name === selectedGroup ? 'active' : ''}`;
+      btn.dataset.group = g.name;
+      
+      btn.innerHTML = `
+        <div class="group-item-info">
+          <span class="group-item-name">${g.name}</span>
+          <span class="group-item-spec">${g.specialty} · ${g.course}</span>
+        </div>
+        <i class="ph ph-check-circle group-item-check"></i>
+      `;
+      
+      btn.addEventListener('click', () => {
+        localStorage.setItem('selected_group', g.name);
+        document.querySelectorAll('.selected-group-name').forEach(el => {
+          el.textContent = g.name;
+        });
+        
+        renderGroupList(filterCourse, searchQuery);
+        renderSchedule();
+        
+        const groupModalBackdrop = document.getElementById('groupModalBackdrop');
+        if (groupModalBackdrop) groupModalBackdrop.classList.remove('open');
+      });
+
+      groupListEl.appendChild(btn);
+    });
   }
 
   function renderSchedule() {
     scheduleContainer.innerHTML = '';
-    
+
     if (!scheduleData || !scheduleData.schedule) {
       return;
     }
@@ -194,10 +339,20 @@ document.addEventListener('DOMContentLoaded', () => {
       const classesDiv = document.createElement('div');
       classesDiv.className = 'day-column-classes';
 
-      const rawSchedule = scheduleData.schedule[day] || [];
-      const filteredSchedule = rawSchedule.filter(cls => {
-        if (!cls.weekType) return true;
-        return cls.weekType === currentWeekType;
+      const groupName = localStorage.getItem('selected_group') || Object.keys(scheduleData.schedule)[0];
+      const groupSchedule = scheduleData.schedule[groupName];
+      const rawSchedule = groupSchedule ? (groupSchedule[day]?.classes || []) : [];
+      
+      const filteredSchedule = [];
+      rawSchedule.forEach(cls => {
+        const weekData = cls[currentWeekType];
+        if (weekData) {
+          filteredSchedule.push({
+            num: cls.pair,
+            time: cls.time,
+            ...weekData
+          });
+        }
       });
 
       if (filteredSchedule.length === 0) {
@@ -208,16 +363,23 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
         `;
       } else {
+        const hasAnyLocation = filteredSchedule.some(cls => cls.location && cls.location.trim() !== '');
+
         filteredSchedule.forEach((cls, index) => {
-          const timeObj = scheduleData.times[cls.num];
-          const link = scheduleData.links[cls.link] || '#';
-          const typeLabel = cls.type === 'lecture' ? 'Лекція' : 'Практика';
+          const [startStr, endStr] = cls.time.split('-');
+          const link = cls.meet_url || '#';
+          
+          let typeLabel = cls.type;
+          if (!typeLabel) {
+             typeLabel = hasAnyLocation ? 'Практика' : 'Лекція';
+          }
+          const typeClass = typeLabel === 'Лекція' ? 'lecture' : 'practice';
 
           // Live class check
           let isLive = false;
-          if (isToday) {
-            const [startH, startM] = timeObj.start.split(':').map(Number);
-            const [endH, endM] = timeObj.end.split(':').map(Number);
+          if (isToday && startStr && endStr) {
+            const [startH, startM] = startStr.split(':').map(Number);
+            const [endH, endM] = endStr.split(':').map(Number);
             const startTotal = startH * 60 + startM;
             const endTotal = endH * 60 + endM;
             if (currentTotalM >= startTotal && currentTotalM <= endTotal) {
@@ -236,23 +398,46 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
           ` : '';
 
-          card.innerHTML = `
-            <div class="class-header">
-              <div class="class-time">
-                <i class="ph ph-clock"></i>
-                <span>${cls.num} пара · ${timeObj.start}–${timeObj.end}</span>
-              </div>
-              <div class="class-badges">
-                ${liveBadgeHTML}
-                <div class="class-type ${cls.type}">${typeLabel}</div>
-              </div>
-            </div>
-            <div class="class-subject">${cls.subject}</div>
-            <div class="class-footer">
+          let locationHTML = '';
+          if (cls.location && cls.location.trim() !== '') {
+            locationHTML = `
               <div class="class-location" title="${cls.location}">
                 <i class="ph ph-map-pin"></i>
                 <span>${cls.location}</span>
               </div>
+            `;
+          } else {
+            if (hasAnyLocation) {
+              locationHTML = `
+                <div class="class-location" title="Не вказано">
+                  <i class="ph ph-map-pin"></i>
+                  <span>-</span>
+                </div>
+              `;
+            } else {
+              locationHTML = `
+                <div class="class-location dist" title="Дистанційно">
+                  <i class="ph ph-laptop"></i>
+                  <span>Дистант</span>
+                </div>
+              `;
+            }
+          }
+
+          card.innerHTML = `
+            <div class="class-header">
+              <div class="class-time">
+                <i class="ph ph-clock"></i>
+                <span>${cls.num} пара · ${cls.time}</span>
+              </div>
+              <div class="class-badges">
+                ${liveBadgeHTML}
+                <div class="class-type ${typeClass}">${typeLabel}</div>
+              </div>
+            </div>
+            <div class="class-subject">${cls.subject}</div>
+            <div class="class-footer">
+              ${locationHTML}
               <a href="${link}" target="_blank" rel="noopener noreferrer" class="meet-btn">
                 <i class="ph ph-video-camera"></i>
                 Meet
@@ -338,33 +523,39 @@ document.addEventListener('DOMContentLoaded', () => {
     if (Notification.permission !== "granted") return;
 
     setInterval(() => {
-      if(!scheduleData) return;
+      if (!scheduleData) return;
       const now = new Date();
 
       // Check current day and week
       let dayOfWeek = now.getDay();
-      if(dayOfWeek === 0 || dayOfWeek === 6) return; // Weekend
-      
-      const daySchedule = scheduleData.schedule[dayOfWeek];
-      if(!daySchedule) return;
+      if (dayOfWeek === 0 || dayOfWeek === 6) return; // Weekend
 
-      const filteredSchedule = daySchedule.filter(cls => !cls.weekType || cls.weekType === currentWeekType);
+      const groupName = localStorage.getItem('selected_group') || Object.keys(scheduleData.schedule)[0];
+      const groupSchedule = scheduleData.schedule[groupName];
+      if (!groupSchedule) return;
 
-      filteredSchedule.forEach(cls => {
-        const timeObj = scheduleData.times[cls.num];
-        const [startH, startM] = timeObj.start.split(':').map(Number);
-        
+      const dayData = groupSchedule[dayOfWeek];
+      if (!dayData || !dayData.classes) return;
+
+      dayData.classes.forEach(cls => {
+        const weekData = cls[currentWeekType];
+        if (!weekData) return;
+
+        const [startStr, endStr] = cls.time.split('-');
+        if (!startStr) return;
+        const [startH, startM] = startStr.split(':').map(Number);
+
         let targetTime = new Date();
         targetTime.setHours(startH, startM, 0, 0);
-        
+
         // 10 minutes before
         targetTime.setMinutes(targetTime.getMinutes() - 10);
 
         if (now.getHours() === targetTime.getHours() && now.getMinutes() === targetTime.getMinutes() && now.getSeconds() === 0) {
-           new Notification("Скоро пара!", {
-             body: `${cls.subject} почнеться за 10 хвилин.`,
-             icon: "assets/schedule-plus.svg"
-           });
+          new Notification("Скоро пара!", {
+            body: `${weekData.subject} почнеться за 10 хвилин.`,
+            icon: "assets/schedule-plus.svg"
+          });
         }
       });
     }, 1000);

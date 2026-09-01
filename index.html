@@ -20,7 +20,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=0.3">
 </head>
 <body>
 
@@ -30,6 +30,12 @@
         <h1 class="app-title">Розклад<span class="plus-accent">+</span></h1>
         
         <div class="header-controls">
+          <button class="group-select-btn" id="desktopGroupBtn" aria-label="Обрати групу" title="Обрати групу">
+            <i class="ph ph-graduation-cap"></i>
+            <span class="selected-group-name">КІБ-25011б</span>
+            <i class="ph ph-caret-down"></i>
+          </button>
+
           <div class="segmented-control" id="weekToggle">
             <input type="radio" id="num-week" name="week-type" value="numerator" checked>
             <label for="num-week" id="num-label">Чисельник</label>
@@ -69,6 +75,15 @@
       </div>
     </main>
 
+    <!-- Mobile Group Select Floating Bar -->
+    <div class="mobile-group-bar">
+      <button class="group-select-btn mobile-btn" id="mobileGroupBtn">
+        <i class="ph ph-graduation-cap"></i>
+        <span>Група: <strong class="selected-group-name">КІБ-25011б</strong></span>
+        <i class="ph ph-caret-down"></i>
+      </button>
+    </div>
+
     <footer class="app-footer">
       <div class="footer-controls">
         <button class="footer-btn theme-toggle-btn" aria-label="Перемкнути тему">
@@ -87,6 +102,46 @@
     </footer>
   </div>
 
-  <script src="app.js"></script>
+  <!-- Group Selection Modal / Bottom Sheet -->
+  <div class="modal-backdrop" id="groupModalBackdrop">
+    <div class="group-modal" id="groupModal">
+      <div class="group-modal-header">
+        <div class="modal-title-wrapper">
+          <i class="ph ph-graduation-cap"></i>
+          <h3>Вибір групи</h3>
+        </div>
+        <button class="modal-close-btn" id="closeGroupModal" aria-label="Закрити">
+          <i class="ph ph-x"></i>
+        </button>
+      </div>
+
+      <div class="group-modal-body">
+        <div class="group-search-box">
+          <i class="ph ph-magnifying-glass"></i>
+          <input type="text" id="groupSearchInput" placeholder="Пошук групи (наприклад, КІБ, ІПЗ, КН...)" autocomplete="off">
+        </div>
+
+        <div class="course-chips">
+          <button class="course-chip active" data-course="all">Всі</button>
+          <button class="course-chip" data-course="1 курс">1 курс</button>
+          <button class="course-chip" data-course="2 курс">2 курс</button>
+          <button class="course-chip" data-course="3 курс">3 курс</button>
+          <button class="course-chip" data-course="4 курс">4 курс</button>
+          <button class="course-chip" data-course="магістр">Магістри</button>
+        </div>
+
+        <div class="group-list" id="groupList">
+          <!-- Групи будуть згенеровані через JS -->
+        </div>
+
+        <div class="group-modal-notice">
+          <i class="ph ph-info"></i>
+          <span>База даних містить усі 62 групи факультету. Натисніть на потрібну групу для перегляду розкладу.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js?v=0.3"></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'schedule-plus-v0.2';
+const CACHE_NAME = 'schedule-plus-v0.4';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -11,14 +11,15 @@ const ASSETS_TO_CACHE = [
 
 // Install Event - Pre-cache core files
 self.addEventListener('install', (event) => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(ASSETS_TO_CACHE);
-    }).then(() => self.skipWaiting())
+    })
   );
 });
 
-// Activate Event - Clean up old caches
+// Activate Event - Clean up old caches immediately
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -33,7 +34,7 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch Event - Stale-While-Revalidate strategy for internal assets, Network-first for dynamic content
+// Fetch Event - Network-first for schedule data, Stale-While-Revalidate for app assets
 self.addEventListener('fetch', (event) => {
   const requestUrl = new URL(event.request.url);
 
@@ -42,12 +43,27 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Handle local origin and core CDN assets
+  // Network-first for schedule.json to guarantee instant updates
+  if (requestUrl.pathname.includes('schedule.json')) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (response && response.status === 200) {
+            const resClone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, resClone));
+          }
+          return response;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // Stale-While-Revalidate for other static assets
   event.respondWith(
     caches.open(CACHE_NAME).then(async (cache) => {
       const cachedResponse = await cache.match(event.request);
 
-      // Fetch from network in parallel to update cache
       const fetchPromise = fetch(event.request)
         .then((networkResponse) => {
           if (networkResponse && networkResponse.status === 200) {
@@ -55,12 +71,8 @@ self.addEventListener('fetch', (event) => {
           }
           return networkResponse;
         })
-        .catch(() => {
-          // Network failed, return cached response if available
-          return cachedResponse;
-        });
+        .catch(() => cachedResponse);
 
-      // Return cached response immediately if available, otherwise wait for network
       return cachedResponse || fetchPromise;
     })
   );
