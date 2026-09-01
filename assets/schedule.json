@@ -1,0 +1,40 @@
+{
+  "times": {
+    "1": {"start": "08:30", "end": "09:50"},
+    "2": {"start": "10:10", "end": "11:30"},
+    "3": {"start": "11:50", "end": "13:10"},
+    "4": {"start": "13:30", "end": "14:50"},
+    "5": {"start": "15:10", "end": "16:30"}
+  },
+  "links": {
+    "practice": "https://meet.google.com/afn-sgtn-azm",
+    "lecture": "https://meet.google.com/dqa-xzow-mps"
+  },
+  "schedule": {
+    "1": [
+      {"num": 1, "subject": "Компонентна база та схемотехніка в системах захисту інформації", "type": "lecture", "location": "Лекція / Дистант", "link": "lecture"},
+      {"num": 2, "subject": "Комп'ютерна логіка", "type": "lecture", "location": "Лекція / Дистант", "link": "lecture"}
+    ],
+    "2": [
+      {"num": 1, "subject": "Фізичне виховання", "type": "practice", "location": "Спортзал", "link": "practice"},
+      {"num": 2, "subject": "Компонентна база та схемотехніка в системах захисту інформації", "type": "practice", "location": "кабінет 206 корпус 15", "link": "practice"},
+      {"num": 3, "subject": "Організаційне забезпечення захисту інформації, державні та міжнародні вимоги з кібербезпеки", "type": "practice", "location": "кабінет 223 корпус 15", "link": "practice"},
+      {"num": 4, "subject": "Іноземна мова", "type": "practice", "location": "кабінет 317 корпус 11", "link": "practice"}
+    ],
+    "3": [
+      {"num": 2, "subject": "Основи кібербезпеки та захисту", "type": "practice", "location": "кабінет 224 корпус 15", "link": "practice"},
+      {"num": 3, "subject": "Проектування, впровадження та супровід комплексних систем захисту інформації", "type": "practice", "location": "кабінет 231 корпус 15", "link": "practice"},
+      {"num": 4, "subject": "Комп'ютерна логіка", "type": "practice", "location": "кабінет 206 корпус 15", "link": "practice"}
+    ],
+    "4": [
+      {"num": 1, "subject": "Проектування, впровадження та супровід комплексних систем захисту інформації", "type": "lecture", "location": "Лекція / Дистант", "link": "lecture"},
+      {"num": 2, "subject": "Проектування, впровадження та супровід комплексних систем захисту інформації", "type": "lecture", "location": "Лекція / Дистант", "link": "lecture"},
+      {"num": 3, "subject": "Основи кібербезпеки та захисту", "type": "lecture", "location": "Лекція / Дистант", "link": "lecture"}
+    ],
+    "5": [
+      {"num": 2, "subject": "Організаційне забезпечення захисту інформації, державні та міжнародні вимоги з кібербезпеки", "type": "practice", "location": "кабінет 231а корпус 15", "link": "practice"},
+      {"num": 3, "subject": "Комп'ютерна логіка", "type": "practice", "location": "кабінет 206 корпус 15", "link": "practice", "weekType": "numerator"},
+      {"num": 3, "subject": "Проектування, впровадження та супровід комплексних систем захисту інформації", "type": "practice", "location": "кабінет 206 корпус 15", "link": "practice", "weekType": "denominator"}
+    ]
+  }
+}

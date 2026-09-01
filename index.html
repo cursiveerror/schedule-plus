@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Розклад+</title>
+  
+  <meta name="description" content="Розклад занять та швидкий доступ до Google Meet.">
+  <meta name="theme-color" content="#f5f5f7" id="meta-theme-color">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="assets/schedule-plus.svg">
+  <link rel="apple-touch-icon" href="assets/schedule-plus.svg">
+  <meta name="apple-mobile-web-app-title" content="Розклад+">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="app-container">
+    <header class="app-header">
+      <div class="header-top">
+        <h1 class="app-title">Розклад<span class="plus-accent">+</span></h1>
+        
+        <div class="header-controls">
+          <div class="segmented-control" id="weekToggle">
+            <input type="radio" id="num-week" name="week-type" value="numerator" checked>
+            <label for="num-week" id="num-label">Чисельник</label>
+            <input type="radio" id="den-week" name="week-type" value="denominator">
+            <label for="den-week" id="den-label">Знаменник</label>
+            <div class="segmented-control-indicator"></div>
+          </div>
+
+          <div class="desktop-actions">
+            <button class="desktop-icon-btn theme-toggle-btn" aria-label="Перемкнути тему" title="Перемкнути тему">
+              <i class="ph ph-moon"></i>
+            </button>
+            <button class="desktop-icon-btn notify-toggle-btn" aria-label="Сповіщення" title="Увімкнути сповіщення">
+              <i class="ph ph-bell"></i>
+            </button>
+            <a href="https://t.me/sr_dnsk" target="_blank" rel="noopener noreferrer" class="desktop-icon-btn telegram-btn" aria-label="Telegram" title="Telegram">
+              <i class="ph ph-telegram-logo"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <nav class="days-nav">
+        <ul class="days-list" id="daysList">
+          <li><button class="day-tab" data-day="1">Пн</button></li>
+          <li><button class="day-tab" data-day="2">Вт</button></li>
+          <li><button class="day-tab" data-day="3">Ср</button></li>
+          <li><button class="day-tab" data-day="4">Чт</button></li>
+          <li><button class="day-tab" data-day="5">Пт</button></li>
+        </ul>
+      </nav>
+    </header>
+
+    <main class="app-main">
+      <div id="scheduleContainer" class="schedule-grid">
+        <!-- 5 day columns rendered by app.js -->
+      </div>
+    </main>
+
+    <footer class="app-footer">
+      <div class="footer-controls">
+        <button class="footer-btn theme-toggle-btn" aria-label="Перемкнути тему">
+          <i class="ph ph-moon"></i>
+          <span>Тема</span>
+        </button>
+        <button class="footer-btn notify-toggle-btn" aria-label="Увімкнути сповіщення">
+          <i class="ph ph-bell"></i>
+          <span>Сповіщення</span>
+        </button>
+        <a href="https://t.me/sr_dnsk" target="_blank" rel="noopener noreferrer" class="footer-btn telegram-btn" aria-label="Зв'язок з розробником">
+          <i class="ph ph-telegram-logo"></i>
+          <span>Telegram</span>
+        </a>
+      </div>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

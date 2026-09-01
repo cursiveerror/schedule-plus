@@ -1,0 +1,747 @@
+:root {
+  /* Colors - Light Theme */
+  --color-accent: #FF9500;
+  --color-accent-hover: #E08300;
+  --color-accent-light: #FFF4E5;
+  --color-accent-gradient: linear-gradient(135deg, #FF9F0A, #FF7000);
+  --color-accent-glow: rgba(255, 149, 0, 0.3);
+  
+  --color-carbon: #1d1d1f;
+  --color-frost: #f5f5f7;       /* App container background */
+  --color-desktop-bg: #e5e5ea;  /* Surrounding page background */
+  --color-ice: #f4f8fb;
+  --color-smoke: #333333;
+  --color-graphite: #474747;
+  --color-ash: #6e6e73;
+  --color-mist: rgba(0, 0, 0, 0.07);
+  --color-pebble: #ebebec;
+  --color-surface: #ffffff;
+  
+  --color-active-tab-bg: #ffffff;
+  --color-active-tab-text: #1d1d1f;
+  
+  /* Typography */
+  --font-main: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+
+[data-theme="dark"] {
+  /* Colors - Dark Theme */
+  --color-accent: #FF9F0A;
+  --color-accent-hover: #E08C09;
+  --color-accent-light: #331E02;
+  --color-accent-gradient: linear-gradient(135deg, #FFB340, #FF8C00);
+  --color-accent-glow: rgba(255, 159, 10, 0.25);
+  
+  --color-carbon: #f5f5f7;
+  --color-frost: #000000;
+  --color-desktop-bg: #121212;
+  --color-ice: #1c1c1e;
+  --color-smoke: #d2d2d7;
+  --color-graphite: #a1a1a6;
+  --color-ash: #8e8e93;
+  --color-mist: rgba(255, 255, 255, 0.1);
+  --color-pebble: #1c1c1e;
+  --color-surface: #141415;
+  
+  --color-active-tab-bg: #636366;
+  --color-active-tab-text: #ffffff;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
+}
+
+body {
+  font-family: var(--font-main);
+  background-color: var(--color-desktop-bg);
+  color: var(--color-carbon);
+  line-height: 1.47;
+  letter-spacing: -0.016em;
+  font-size: 16px;
+  font-weight: 400;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  min-height: 100vh;
+}
+
+/* ==========================================================================
+   Base Layout (Mobile First: < 900px)
+   ========================================================================== */
+.app-container {
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-frost);
+  position: relative;
+}
+
+/* Header */
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background-color: var(--color-frost);
+  padding: calc(14px + env(safe-area-inset-top)) 20px 12px;
+  border-bottom: 1px solid var(--color-mist);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+@supports (backdrop-filter: blur(20px)) {
+  .app-header {
+    background-color: rgba(245, 245, 247, 0.85);
+  }
+  [data-theme="dark"] .app-header {
+    background-color: rgba(0, 0, 0, 0.85);
+  }
+}
+
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.app-title {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--color-carbon);
+}
+
+.plus-accent {
+  color: var(--color-accent);
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Desktop actions hidden on mobile */
+.desktop-actions {
+  display: none;
+}
+
+/* Segmented Control */
+.segmented-control {
+  position: relative;
+  display: flex;
+  background-color: var(--color-pebble);
+  border-radius: 980px;
+  padding: 3px;
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.segmented-control:active {
+  transform: scale(0.96);
+}
+
+.segmented-control input {
+  display: none;
+}
+
+.segmented-control label {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-ash);
+  cursor: pointer;
+  text-align: center;
+  transition: color 0.25s ease;
+  white-space: nowrap;
+}
+
+.segmented-control-indicator {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  bottom: 3px;
+  width: calc(50% - 3px);
+  background-color: var(--color-active-tab-bg);
+  border-radius: 980px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  transition: transform 0.25s cubic-bezier(0.25, 1, 0.5, 1);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.segmented-control[data-week="numerator"] #num-label,
+#num-week:checked ~ #num-label {
+  color: var(--color-active-tab-text);
+}
+
+.segmented-control[data-week="denominator"] #den-label,
+#den-week:checked ~ #den-label {
+  color: var(--color-active-tab-text);
+}
+
+.segmented-control[data-week="denominator"] .segmented-control-indicator,
+#den-week:checked ~ .segmented-control-indicator {
+  transform: translateX(100%);
+}
+
+/* Days Nav (Mobile) */
+.days-nav {
+  margin-bottom: 0;
+}
+
+.days-list {
+  display: flex;
+  list-style: none;
+  justify-content: space-between;
+  background-color: var(--color-pebble);
+  border-radius: 980px;
+  padding: 3px;
+}
+
+.days-list li {
+  flex: 1;
+}
+
+.day-tab {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: var(--color-ash);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 7px 0;
+  border-radius: 980px;
+  cursor: pointer;
+  transition: color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.day-tab:hover {
+  color: var(--color-carbon);
+}
+
+.day-tab:active {
+  transform: scale(0.95);
+}
+
+.day-tab.active {
+  background-color: var(--color-active-tab-bg);
+  color: var(--color-active-tab-text);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+}
+
+/* Main Area (Mobile) */
+.app-main {
+  flex: 1;
+  padding: 16px 20px 24px;
+}
+
+.schedule-grid {
+  display: flex;
+  flex-direction: column;
+}
+
+/* On mobile, day-column-header is hidden, only active day-column is visible */
+.day-column {
+  display: none;
+}
+
+.day-column.active {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.day-column-header {
+  display: none;
+}
+
+.day-column-classes {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 12px;
+}
+
+.day-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 0;
+  color: var(--color-ash);
+  gap: 12px;
+}
+
+.day-empty i {
+  font-size: 40px;
+  color: var(--color-mist);
+}
+
+/* Class Card */
+.class-card, .lesson-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-mist);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  height: auto;
+  gap: 10px;
+  opacity: 0;
+  transform: translateY(10px);
+  animation: slideUpFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transition: border-color 0.2s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+}
+
+/* Mobile specific card padding (< 600px) */
+@media (max-width: 600px) {
+  .class-card, .lesson-card {
+    padding: 16px 18px;
+    gap: 12px;
+  }
+}
+
+/* Live Class Highlight */
+.class-card.is-live, .lesson-card.is-live {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 1px var(--color-accent), 0 8px 24px rgba(255, 149, 0, 0.15);
+}
+
+.class-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+}
+
+.class-time {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-ash);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap; /* Prevent line wrapping for class time */
+  flex-shrink: 0;
+}
+
+.class-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.live-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background-color: var(--color-accent-light);
+  color: var(--color-accent);
+  padding: 2px 6px;
+  border-radius: 980px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+}
+
+.live-dot {
+  width: 5px;
+  height: 5px;
+  background-color: var(--color-accent);
+  border-radius: 50%;
+  animation: pulseDot 1.5s infinite;
+}
+
+.class-type {
+  font-size: 0.75rem; /* Compact 12px / 0.75rem */
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 980px;
+  background-color: var(--color-pebble);
+  color: var(--color-ash);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.class-type.lecture {
+  background-color: var(--color-accent-light);
+  color: var(--color-accent);
+}
+
+.class-subject {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-carbon);
+  line-height: 1.35;
+  letter-spacing: -0.015em;
+  margin-bottom: 8px;
+}
+
+/* Footer with Meet button fixed to bottom of card */
+.class-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto; /* Fixed alignment to bottom of card */
+}
+
+.class-location {
+  font-size: 13px;
+  color: var(--color-ash);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 65%;
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Meet Button */
+.meet-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  background: var(--color-accent-gradient);
+  color: #ffffff;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 7px 14px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px var(--color-accent-glow);
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.2s ease, filter 0.2s ease;
+  white-space: nowrap;
+}
+
+[data-theme="dark"] .meet-btn {
+  color: #000000;
+}
+
+.meet-btn:hover {
+  filter: brightness(1.08);
+  box-shadow: 0 6px 16px var(--color-accent-glow);
+}
+
+.meet-btn:active {
+  transform: scale(0.94);
+}
+
+.meet-btn i {
+  font-size: 15px;
+}
+
+/* Mobile Footer */
+.app-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
+  padding: 10px 20px calc(10px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--color-mist);
+  background-color: var(--color-frost);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+@supports (backdrop-filter: blur(20px)) {
+  .app-footer {
+    background-color: rgba(245, 245, 247, 0.85);
+  }
+  [data-theme="dark"] .app-footer {
+    background-color: rgba(0, 0, 0, 0.85);
+  }
+}
+
+.footer-controls {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  gap: 8px;
+}
+
+.footer-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  background: transparent;
+  border: none;
+  color: var(--color-ash);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  padding: 4px 0;
+  transition: color 0.2s, transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.footer-btn:active {
+  transform: scale(0.92);
+}
+
+.footer-btn i {
+  font-size: 20px;
+}
+
+.footer-btn:hover, .footer-btn.active {
+  color: var(--color-accent);
+}
+
+/* ==========================================================================
+   Desktop View (>= 900px) - Full Responsive 5-Column Grid Layout
+   ========================================================================== */
+@media (min-width: 900px) {
+  body {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 32px 24px;
+    background-color: var(--color-desktop-bg);
+  }
+
+  .app-container {
+    max-width: 1500px;
+    width: 100%;
+    min-height: calc(100vh - 64px);
+    border-radius: 28px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.12), 0 0 1px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+  }
+
+  [data-theme="dark"] .app-container {
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6), 0 0 1px rgba(255, 255, 255, 0.12);
+  }
+
+  /* Header row with logo left, controls right */
+  .app-header {
+    padding: 16px 28px;
+    border-bottom: 1px solid var(--color-mist);
+  }
+
+  .header-top {
+    margin-bottom: 0;
+  }
+
+  .app-title {
+    font-size: 26px;
+  }
+
+  /* Show desktop header action buttons */
+  .desktop-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: 8px;
+  }
+
+  .desktop-icon-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background-color: var(--color-pebble);
+    color: var(--color-carbon);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background-color 0.2s ease, color 0.2s ease, transform 0.15s ease;
+  }
+
+  .desktop-icon-btn:hover {
+    background-color: var(--color-accent-light);
+    color: var(--color-accent);
+    transform: scale(1.05);
+  }
+
+  .desktop-icon-btn:active {
+    transform: scale(0.95);
+  }
+
+  .desktop-icon-btn.active {
+    color: var(--color-accent);
+  }
+
+  /* Hide mobile day tabs and mobile footer on desktop */
+  .days-nav {
+    display: none;
+  }
+
+  .app-footer {
+    display: none;
+  }
+
+  /* 5-Column Grid Layout */
+  .app-main {
+    padding: 24px 28px 32px;
+  }
+
+  .schedule-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 16px;
+    align-items: stretch;
+  }
+
+  /* All 5 day columns visible on desktop */
+  .day-column {
+    display: flex;
+    flex-direction: column;
+    background: var(--color-pebble);
+    border-radius: 20px;
+    padding: 12px;
+    border: 1px solid var(--color-mist);
+    min-height: 480px;
+    gap: 0;
+  }
+
+  .day-column.active {
+    display: flex;
+    gap: 0;
+  }
+
+  /* Day Header */
+  .day-column-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+    border-radius: 12px;
+    background-color: var(--color-surface);
+    color: var(--color-carbon);
+    min-height: 44px;
+    box-sizing: border-box;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+    border: 1px solid var(--color-mist);
+  }
+
+  .day-column-title {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--color-carbon); /* Keep primary dark/contrasting color */
+  }
+
+  /* High-contrast today header: dark title with orange accent border and orange badge */
+  .day-column-header.is-today {
+    background-color: var(--color-surface);
+    border-color: rgba(255, 149, 0, 0.4);
+    box-shadow: 0 2px 8px rgba(255, 149, 0, 0.1);
+  }
+
+  .day-column-header.is-today .day-column-title {
+    color: var(--color-carbon);
+  }
+
+  .today-badge {
+    font-size: 10px;
+    font-weight: 700;
+    background-color: var(--color-accent);
+    color: #ffffff;
+    padding: 2px 7px;
+    border-radius: 980px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    white-space: nowrap;
+  }
+
+  [data-theme="dark"] .today-badge {
+    color: #000000;
+  }
+
+  .day-column-classes {
+    gap: 10px;
+  }
+
+  /* Desktop card styling */
+  .class-card, .lesson-card {
+    padding: 13px 12px;
+    gap: 8px;
+    border-radius: 14px;
+  }
+
+  .class-card:hover, .lesson-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+  }
+
+  [data-theme="dark"] .class-card:hover, [data-theme="dark"] .lesson-card:hover {
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
+  }
+
+  .class-subject {
+    font-size: 13.5px;
+    line-height: 1.32;
+  }
+
+  .class-time {
+    font-size: 11px;
+  }
+
+  .class-location {
+    font-size: 11.5px;
+    max-width: 55%;
+  }
+
+  .meet-btn {
+    font-size: 11.5px;
+    padding: 5px 10px;
+    border-radius: 8px;
+  }
+
+  .day-empty {
+    padding: 40px 0;
+    font-size: 13px;
+  }
+
+  .day-empty i {
+    font-size: 32px;
+  }
+}
+
+/* Animations */
+@keyframes slideUpFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulseDot {
+  0% { transform: scale(0.8); opacity: 0.5; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(0.8); opacity: 0.5; }
+}

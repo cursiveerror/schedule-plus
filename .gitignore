@@ -1,0 +1,9 @@
+# Design & documentation drafts
+DESIGN.md
+Розклад+.txt
+
+# OS and IDE files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
