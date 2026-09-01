@@ -437,10 +437,6 @@ body {
   white-space: nowrap;
 }
 
-[data-theme="dark"] .meet-btn {
-  color: #000000;
-}
-
 .meet-btn:hover {
   filter: brightness(1.08);
   box-shadow: 0 6px 16px var(--color-accent-glow);
