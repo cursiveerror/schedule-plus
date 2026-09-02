@@ -1,4 +1,4 @@
-const CACHE_NAME = 'schedule-plus-v0.5';
+const CACHE_NAME = 'schedule-plus-v0.6';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -34,7 +34,7 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch Event - Network-first for schedule data, Stale-While-Revalidate for app assets
+// Fetch Event - Stale-While-Revalidate for all assets
 self.addEventListener('fetch', (event) => {
   const requestUrl = new URL(event.request.url);
 
@@ -43,23 +43,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Network-first for schedule.json to guarantee instant updates
-  if (requestUrl.pathname.includes('schedule.json')) {
-    event.respondWith(
-      fetch(event.request)
-        .then((response) => {
-          if (response && response.status === 200) {
-            const resClone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, resClone));
-          }
-          return response;
-        })
-        .catch(() => caches.match(event.request))
-    );
-    return;
-  }
-
-  // Stale-While-Revalidate for other static assets
+  // Stale-While-Revalidate
   event.respondWith(
     caches.open(CACHE_NAME).then(async (cache) => {
       const cachedResponse = await cache.match(event.request);
@@ -71,8 +55,11 @@ self.addEventListener('fetch', (event) => {
           }
           return networkResponse;
         })
-        .catch(() => cachedResponse);
+        .catch(() => {
+          // Ignore network errors (offline mode)
+        });
 
+      // Return cached response immediately if available, otherwise wait for network
       return cachedResponse || fetchPromise;
     })
   );

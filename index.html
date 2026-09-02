@@ -30,7 +30,7 @@
         <h1 class="app-title">Розклад<span class="plus-accent">+</span></h1>
         
         <div class="header-controls">
-          <button class="group-select-btn" id="desktopGroupBtn" aria-label="Обрати групу" title="Обрати групу">
+          <button class="group-select-btn" id="desktopProfileBtn" aria-label="Обрати групу" title="Обрати групу">
             <i class="ph ph-graduation-cap"></i>
             <span class="selected-group-name">КІБ-25011б</span>
             <i class="ph ph-caret-down"></i>
@@ -51,7 +51,10 @@
             <button class="desktop-icon-btn notify-toggle-btn" aria-label="Сповіщення" title="Увімкнути сповіщення">
               <i class="ph ph-bell"></i>
             </button>
-            <a href="https://t.me/sr_dnsk" target="_blank" rel="noopener noreferrer" class="desktop-icon-btn telegram-btn" aria-label="Telegram" title="Telegram">
+            <a href="https://send.monobank.ua/jar/5D1FB9SMrA" target="_blank" rel="noopener noreferrer" class="desktop-icon-btn support-btn" aria-label="Підтримати проєкт" title="Підтримати проєкт">
+              <i class="ph ph-coffee"></i>
+            </a>
+            <a href="https://t.me/schedule_plus" target="_blank" rel="noopener noreferrer" class="desktop-icon-btn telegram-btn" aria-label="Telegram" title="Telegram">
               <i class="ph ph-telegram-logo"></i>
             </a>
           </div>
@@ -77,9 +80,9 @@
 
     <!-- Mobile Group Select Floating Bar -->
     <div class="mobile-group-bar">
-      <button class="group-select-btn mobile-btn" id="mobileGroupBtn">
+      <button class="group-select-btn mobile-btn" id="mobileProfileBtn">
         <i class="ph ph-graduation-cap"></i>
-        <span>Група: <strong class="selected-group-name">КІБ-25011б</strong></span>
+        <span class="selected-group-name">Мій розклад</span>
         <i class="ph ph-caret-down"></i>
       </button>
     </div>
@@ -94,7 +97,11 @@
           <i class="ph ph-bell"></i>
           <span>Сповіщення</span>
         </button>
-        <a href="https://t.me/sr_dnsk" target="_blank" rel="noopener noreferrer" class="footer-btn telegram-btn" aria-label="Зв'язок з розробником">
+        <a href="https://send.monobank.ua/jar/5D1FB9SMrA" target="_blank" rel="noopener noreferrer" class="footer-btn support-btn" aria-label="Підтримати">
+          <i class="ph ph-coffee"></i>
+          <span>Підтримати</span>
+        </a>
+        <a href="https://t.me/schedule_plus" target="_blank" rel="noopener noreferrer" class="footer-btn telegram-btn" aria-label="Зв'язок в телеграмі">
           <i class="ph ph-telegram-logo"></i>
           <span>Telegram</span>
         </a>
@@ -102,46 +109,216 @@
     </footer>
   </div>
 
-  <!-- Group Selection Modal / Bottom Sheet -->
-  <div class="modal-backdrop" id="groupModalBackdrop">
-    <div class="group-modal" id="groupModal">
-      <div class="group-modal-header">
-        <div class="modal-title-wrapper">
-          <i class="ph ph-graduation-cap"></i>
-          <h3>Вибір групи</h3>
-        </div>
-        <button class="modal-close-btn" id="closeGroupModal" aria-label="Закрити">
-          <i class="ph ph-x"></i>
-        </button>
-      </div>
-
-      <div class="group-modal-body">
-        <div class="group-search-box">
-          <i class="ph ph-magnifying-glass"></i>
-          <input type="text" id="groupSearchInput" placeholder="Пошук групи (наприклад, КІБ, ІПЗ, КН...)" autocomplete="off">
+  
+    <!-- Profile / Schedules Modal -->
+    <div class="modal-backdrop" id="profileModalBackdrop">
+      <div class="group-modal" id="profileModal" style="max-width: 480px; width: 95%; max-height: 88vh; display: flex; flex-direction: column;">
+        <div class="group-modal-header">
+          <div class="modal-title-wrapper">
+            <i class="ph ph-graduation-cap"></i>
+            <h3>Мої розклади</h3>
+          </div>
+          <button class="modal-close-btn" id="closeProfileModal" aria-label="Закрити">
+            <i class="ph ph-x"></i>
+          </button>
         </div>
 
-        <div class="course-chips">
-          <button class="course-chip active" data-course="all">Всі</button>
-          <button class="course-chip" data-course="1 курс">1 курс</button>
-          <button class="course-chip" data-course="2 курс">2 курс</button>
-          <button class="course-chip" data-course="3 курс">3 курс</button>
-          <button class="course-chip" data-course="4 курс">4 курс</button>
-          <button class="course-chip" data-course="магістр">Магістри</button>
-        </div>
+        <div class="profile-modal-content">
+          
+          <!-- Section 1: Active Schedule Card -->
+          <div class="profile-section">
+            <div class="profile-section-header">
+              <span class="profile-section-title">Активний розклад</span>
+              <span class="active-pill-badge"><i class="ph ph-check-circle"></i> Зараз на екрані</span>
+            </div>
 
-        <div class="group-list" id="groupList">
-          <!-- Групи будуть згенеровані через JS -->
-        </div>
+            <div class="active-schedule-card">
+              <div class="active-schedule-name-row">
+                <input type="text" id="profileNameInput" placeholder="Назва розкладу" autocomplete="off">
+                <button id="saveProfileBtn" class="active-schedule-save-btn" title="Зберегти змінену назву">
+                  Зберегти
+                </button>
+              </div>
 
-        <div class="group-modal-notice">
-          <i class="ph ph-info"></i>
-          <span>База даних містить усі 62 групи факультету. Натисніть на потрібну групу для перегляду розкладу.</span>
+              <button id="editScheduleBtn" class="active-schedule-edit-btn">
+                <i class="ph ph-pencil-simple"></i>
+                <span>Редагувати пари цього розкладу</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Section 2: All Schedules List -->
+          <div class="profile-section">
+            <div class="profile-section-header">
+              <span class="profile-section-title">Перемикання розкладів</span>
+              <span style="font-size: 11.5px; color: var(--color-ash);">Клікніть для вибору</span>
+            </div>
+            
+            <div id="profilesListContainer" class="profiles-list-container">
+              <!-- Dynamically populated profile items -->
+            </div>
+          </div>
+
+          <!-- Section 3: Add new schedule -->
+          <div class="profile-section">
+            <div class="profile-section-header">
+              <span class="profile-section-title">Додати новий розклад</span>
+            </div>
+
+            <div class="add-schedule-box">
+              <button id="addEmptyProfileBtn" class="add-empty-btn">
+                <i class="ph ph-plus-circle"></i>
+                <span>Створити порожній розклад</span>
+              </button>
+
+              <div class="add-schedule-row">
+                <div class="custom-select-container" id="templateSelectWrapper" style="flex: 1;">
+                  <div class="custom-select-trigger">
+                    <span class="custom-select-text">Оберіть готовий шаблон...</span>
+                    <i class="ph ph-caret-down custom-select-caret"></i>
+                  </div>
+                  <div class="custom-select-options">
+                    <div class="custom-select-option selected" data-value="">
+                      <span class="opt-content" style="color: var(--color-ash);">Оберіть готовий шаблон...</span>
+                      <i class="ph ph-check check-icon"></i>
+                    </div>
+                    <div class="custom-select-option" data-value="КІБ-25011б">
+                      <span class="opt-content" style="display: flex; align-items: center; gap: 8px;">
+                        <i class="ph ph-graduation-cap" style="color: var(--color-accent);"></i>
+                        <strong>КІБ-25011б</strong>
+                      </span>
+                      <i class="ph ph-check check-icon"></i>
+                    </div>
+                  </div>
+                  <input type="hidden" id="templateSelect" value="">
+                </div>
+
+                <button id="loadTemplateBtn" class="template-add-btn" title="Додати розклад із вибраного шаблону">
+                  <i class="ph ph-download-simple"></i>
+                  <span>Додати</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 4: Clear active schedule -->
+          <div class="profile-danger-actions">
+            <button id="resetScheduleBtn" class="clear-classes-link-btn">
+              <i class="ph ph-trash"></i>
+              <span>Очистити всі пари активного розкладу</span>
+            </button>
+          </div>
+
         </div>
       </div>
     </div>
-  </div>
 
-  <script src="app.js?v=0.3"></script>
+    <!-- Editor Modal -->
+    <div class="modal-backdrop" id="editorModalBackdrop" style="z-index: 9999;">
+      <div class="group-modal" id="editorModal" style="max-width: 800px; width: 95%; max-height: 90vh;">
+        <div class="group-modal-header">
+          <div class="modal-title-wrapper">
+            <i class="ph ph-pencil-simple"></i>
+            <h3>Редактор розкладу</h3>
+          </div>
+          <button class="modal-close-btn" id="closeEditorModal" aria-label="Закрити">
+            <i class="ph ph-x"></i>
+          </button>
+        </div>
+        <div class="group-modal-body" style="padding-top: 10px; flex: 1; overflow-y: auto;">
+          <div class="segmented-control" id="editorWeekToggle" data-week="numerator" style="margin-bottom: 20px;">
+            <input type="radio" name="editor-week-type" id="editor-num-week" value="numerator" checked>
+            <input type="radio" name="editor-week-type" id="editor-den-week" value="denominator">
+            <label for="editor-num-week" id="editor-num-label">Чисельник</label>
+            <label for="editor-den-week" id="editor-den-label">Знаменник</label>
+            <div class="segmented-control-indicator"></div>
+          </div>
+          
+          <div style="display:flex; gap:12px; overflow-x: auto; padding-bottom: 12px; margin-bottom: 16px; scrollbar-width: none;" id="editorDaysNav">
+             <button class="course-chip active" data-editday="1">ПН</button>
+             <button class="course-chip" data-editday="2">ВТ</button>
+             <button class="course-chip" data-editday="3">СР</button>
+             <button class="course-chip" data-editday="4">ЧТ</button>
+             <button class="course-chip" data-editday="5">ПТ</button>
+             <button class="course-chip" data-editday="6">СБ</button>
+          </div>
+          
+          <div id="editorClassesContainer" style="display: flex; flex-direction: column; gap: 12px;">
+             <!-- Classes will be listed here by JS -->
+          </div>
+          
+          <button id="addClassBtn" style="margin-top: 16px; width: 100%; background: var(--color-pebble); color: var(--color-carbon); border: 2px dashed var(--color-mist); padding: 16px; border-radius: 16px; font-size: 15px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s ease;">
+            <i class="ph ph-plus"></i>
+            Додати пару
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Edit Class Modal (Nested) -->
+    <div class="modal-backdrop" id="editClassModalBackdrop" style="z-index: 10000;">
+      <div class="group-modal" id="editClassModal" style="max-width: 400px; width: 95%;">
+        <div class="group-modal-header">
+          <div class="modal-title-wrapper">
+            <i class="ph ph-book-open"></i>
+            <h3 id="editClassTitle">Редагування пари</h3>
+          </div>
+          <button class="modal-close-btn" id="closeEditClassModal" aria-label="Закрити">
+            <i class="ph ph-x"></i>
+          </button>
+        </div>
+        <div class="group-modal-body" style="display:flex; flex-direction:column; gap:12px; padding-top: 10px;">
+          <input type="hidden" id="editClassId">
+          <div style="display:flex; flex-direction:column; gap: 6px;">
+            <label style="font-size: 13px; font-weight: 600; color: var(--color-ash);">Номер пари (1-7)</label>
+            <input type="number" id="editClassNum" class="form-input" min="1" max="7" style="padding: 12px; border-radius: 12px; border: 1px solid var(--color-mist); background: var(--color-pebble); color: var(--color-carbon);">
+          </div>
+          <div style="display:flex; flex-direction:column; gap: 6px;">
+            <label style="font-size: 13px; font-weight: 600; color: var(--color-ash);">Предмет</label>
+            <input type="text" id="editClassSubject" class="form-input" style="padding: 12px; border-radius: 12px; border: 1px solid var(--color-mist); background: var(--color-pebble); color: var(--color-carbon);">
+          </div>
+          <div style="display:flex; flex-direction:column; gap: 6px;">
+            <label style="font-size: 13px; font-weight: 600; color: var(--color-ash);">Локація (аудиторія)</label>
+            <input type="text" id="editClassLocation" class="form-input" placeholder="напр. 214 к.15" style="padding: 12px; border-radius: 12px; border: 1px solid var(--color-mist); background: var(--color-pebble); color: var(--color-carbon);">
+          </div>
+          <div style="display:flex; flex-direction:column; gap: 6px;">
+            <label style="font-size: 13px; font-weight: 600; color: var(--color-ash);">Власне посилання (Meet/Zoom/Тощо)</label>
+            <input type="url" id="editClassLink" class="form-input" placeholder="https://meet.google.com/..." style="padding: 12px; border-radius: 12px; border: 1px solid var(--color-mist); background: var(--color-pebble); color: var(--color-carbon);">
+          </div>
+          <div style="display:flex; flex-direction:column; gap: 6px;">
+            <label style="font-size: 13px; font-weight: 600; color: var(--color-ash);">Тип заняття</label>
+            <div class="custom-select-container" id="editClassTypeWrapper">
+              <div class="custom-select-trigger">
+                <span class="custom-select-text">
+                  <span class="class-type lecture">Лекція</span>
+                </span>
+                <i class="ph ph-caret-down custom-select-caret"></i>
+              </div>
+              <div class="custom-select-options">
+                <div class="custom-select-option selected" data-value="Лекція">
+                  <span class="opt-content">
+                    <span class="class-type lecture">Лекція</span>
+                  </span>
+                  <i class="ph ph-check check-icon"></i>
+                </div>
+                <div class="custom-select-option" data-value="Практика">
+                  <span class="opt-content">
+                    <span class="class-type practice">Практика</span>
+                  </span>
+                  <i class="ph ph-check check-icon"></i>
+                </div>
+              </div>
+              <input type="hidden" id="editClassType" value="Лекція">
+            </div>
+          </div>
+          <div style="display:flex; gap: 12px; margin-top: 12px;">
+             <button id="saveClassBtn" style="flex: 1; background: var(--color-accent); color: white; border: none; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer;">Зберегти</button>
+             <button id="deleteClassBtn" style="background: #ff3b30; color: white; border: none; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; display: none;"><i class="ph ph-trash"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  <script src="app.js"></script>
 </body>
 </html>

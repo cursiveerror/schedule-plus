@@ -5,17 +5,33 @@ document.addEventListener('DOMContentLoaded', () => {
     2: 'Вівторок',
     3: 'Середа',
     4: 'Четвер',
-    5: "П'ятниця"
+    5: "П'ятниця",
+    6: 'Субота'
   };
 
-  let scheduleData = null;
+  // Pair times
+  const PAIR_TIMES = {
+    1: "08:30-09:50",
+    2: "10:10-11:30",
+    3: "11:50-13:10",
+    4: "13:30-14:50",
+    5: "15:10-16:30",
+    6: "16:50-18:10",
+    7: "18:30-19:50"
+  };
+
   let currentWeekType = 'numerator';
   let selectedDay = 1;
 
+  // Editor State
+  let editorWeekType = 'numerator';
+  let editorSelectedDay = 1;
+
+  // Clear old caches except current
   if ('caches' in window) {
     caches.keys().then(keys => {
       keys.forEach(k => {
-        if (k !== 'schedule-plus-v0.3') caches.delete(k);
+        if (k !== 'schedule-plus-v0.6') caches.delete(k);
       });
     });
   }
@@ -27,68 +43,331 @@ document.addEventListener('DOMContentLoaded', () => {
   const themeToggleBtns = document.querySelectorAll('.theme-toggle-btn');
   const notifyToggleBtns = document.querySelectorAll('.notify-toggle-btn');
   const metaThemeColor = document.getElementById('meta-theme-color');
+  
+  // Profile Elements
+  const desktopProfileBtn = document.getElementById('desktopProfileBtn');
+  const mobileProfileBtn = document.getElementById('mobileProfileBtn');
+  const profileNameSpans = document.querySelectorAll('.selected-group-name');
 
-  // Load Data
-  fetch(`assets/schedule_test.json?v=${Date.now()}`)
-    .then(res => res.json())
-    .then(data => {
-      scheduleData = data;
-      init();
-    })
-    .catch(err => console.error("Error loading schedule:", err));
+  // --- Profiles & DB Management ---
+  function getProfiles() {
+    try {
+      return JSON.parse(localStorage.getItem('schedule_profiles')) || [];
+    } catch(e) {
+      return [];
+    }
+  }
+
+  function setProfiles(profiles) {
+    localStorage.setItem('schedule_profiles', JSON.stringify(profiles));
+  }
+
+  function getActiveProfileId() {
+    return localStorage.getItem('active_profile_id') || '';
+  }
+
+  function setActiveProfileId(id) {
+    localStorage.setItem('active_profile_id', id);
+  }
+
+  function getActiveProfile() {
+    const profiles = getProfiles();
+    const activeId = getActiveProfileId();
+    let profile = profiles.find(p => p.id === activeId);
+    if (!profile && profiles.length > 0) {
+      profile = profiles[0];
+      setActiveProfileId(profile.id);
+    }
+    return profile || null;
+  }
+
+  function saveActiveProfile(updatedProfile) {
+    const profiles = getProfiles();
+    const activeId = getActiveProfileId();
+    const idx = profiles.findIndex(p => p.id === activeId);
+    if (idx !== -1) {
+      profiles[idx] = updatedProfile;
+      setProfiles(profiles);
+    }
+  }
+
+  function createEmptySchedule() {
+    return { "1": [], "2": [], "3": [], "4": [], "5": [], "6": [] };
+  }
+
+  // Initialize DB
+  initDB();
+
+  function initDB() {
+    let profiles = getProfiles();
+
+    // 1. Migration from old single-profile storage
+    const oldNum = localStorage.getItem('custom_schedule_numerator');
+    const oldDen = localStorage.getItem('custom_schedule_denominator');
+    const oldName = localStorage.getItem('profile_name');
+
+    if (profiles.length === 0 && oldNum && oldDen) {
+      try {
+        const num = JSON.parse(oldNum);
+        const den = JSON.parse(oldDen);
+        const migratedProfile = {
+          id: 'prof_' + Date.now(),
+          name: oldName || 'КІБ-25011б',
+          numerator: num,
+          denominator: den
+        };
+        profiles = [migratedProfile];
+        setProfiles(profiles);
+        setActiveProfileId(migratedProfile.id);
+      } catch (err) {
+        console.error('Migration error:', err);
+      }
+    }
+
+    if (profiles.length === 0) {
+      const defaultProfile = {
+        id: 'prof_' + Date.now(),
+        name: 'КІБ-25011б',
+        numerator: createEmptySchedule(),
+        denominator: createEmptySchedule()
+      };
+      profiles = [defaultProfile];
+      setProfiles(profiles);
+      setActiveProfileId(defaultProfile.id);
+    } else {
+      // Deduplicate profiles by name if duplicates were created during testing
+      const uniqueProfiles = [];
+      const seenNames = new Set();
+      for (const p of profiles) {
+        if (!seenNames.has(p.name)) {
+          seenNames.add(p.name);
+          uniqueProfiles.push(p);
+        }
+      }
+      if (uniqueProfiles.length !== profiles.length) {
+        profiles = uniqueProfiles;
+        setProfiles(profiles);
+      }
+    }
+
+    // Always fetch schedule.json to keep template for КІБ-25011б in sync with local file
+    fetch('assets/schedule.json?v=' + Date.now())
+      .then(res => res.json())
+      .then(data => {
+        if (!data || !data.templates) return;
+        const kibTpl = data.templates['КІБ-25011б'];
+        if (!kibTpl) return;
+
+        let currentProfiles = getProfiles();
+        const kibIdx = currentProfiles.findIndex(p => p.name === 'КІБ-25011б');
+
+        if (kibIdx !== -1) {
+          currentProfiles[kibIdx].numerator = JSON.parse(JSON.stringify(kibTpl.numerator));
+          currentProfiles[kibIdx].denominator = JSON.parse(JSON.stringify(kibTpl.denominator));
+          setProfiles(currentProfiles);
+
+          if (getActiveProfileId() === currentProfiles[kibIdx].id) {
+            setDB(kibTpl.numerator, kibTpl.denominator);
+            renderSchedule();
+            updateProfileUI();
+          }
+        }
+      })
+      .catch(err => console.warn('Could not sync template from schedule.json:', err));
+
+    init();
+  }
+
+  function getDB() {
+    const profile = getActiveProfile();
+    if (profile && profile.numerator && profile.denominator) {
+      return { num: profile.numerator, den: profile.denominator };
+    }
+    return { num: createEmptySchedule(), den: createEmptySchedule() };
+  }
+
+  function setDB(num, den) {
+    const profile = getActiveProfile();
+    if (profile) {
+      profile.numerator = num;
+      profile.denominator = den;
+      saveActiveProfile(profile);
+    }
+    // Also save separate numerator and denominator keys for full compatibility
+    localStorage.setItem('custom_schedule_numerator', JSON.stringify(num));
+    localStorage.setItem('custom_schedule_denominator', JSON.stringify(den));
+  }
 
   function init() {
     initTheme();
     calculateCurrentWeekAndDay();
     setupEventListeners();
-    renderGroupList();
-
-    let savedGroup = localStorage.getItem('selected_group');
-    if ((!savedGroup || !scheduleData.schedule[savedGroup]) && scheduleData && scheduleData.schedule) {
-      savedGroup = scheduleData.schedule['КІБ-25011б'] ? 'КІБ-25011б' : Object.keys(scheduleData.schedule)[0];
-      localStorage.setItem('selected_group', savedGroup);
-    }
-    
-    if (savedGroup) {
-      document.querySelectorAll('.selected-group-name').forEach(el => {
-        el.textContent = savedGroup;
-      });
-    }
-
+    updateProfileUI();
     renderSchedule();
     checkNotificationStatus();
     registerServiceWorker();
+    startLiveTimer();
+  }
+
+  // Timer to update live status automatically
+  let lastMinute = new Date().getMinutes();
+  function startLiveTimer() {
+    setInterval(() => {
+      const currentMinute = new Date().getMinutes();
+      if (currentMinute !== lastMinute) {
+        lastMinute = currentMinute;
+        renderSchedule(); // re-render dynamically
+      }
+    }, 1000);
+  }
+
+  function updateProfileUI() {
+    const profile = getActiveProfile();
+    const pName = profile ? profile.name : 'Мій розклад';
+    profileNameSpans.forEach(el => el.textContent = pName);
+    const profileNameInput = document.getElementById('profileNameInput');
+    if (profileNameInput && profile) {
+      profileNameInput.value = profile.name;
+    }
+    renderProfilesList();
+  }
+
+  // --- Custom Select Handling ---
+  function initCustomSelect(wrapperId, hiddenInputId) {
+    const wrapper = document.getElementById(wrapperId);
+    if (!wrapper) return;
+    const trigger = wrapper.querySelector('.custom-select-trigger');
+    const textSpan = wrapper.querySelector('.custom-select-text');
+    const optionsContainer = wrapper.querySelector('.custom-select-options');
+    const hiddenInput = document.getElementById(hiddenInputId);
+
+    trigger.onclick = (e) => {
+      e.stopPropagation();
+      const isOpen = wrapper.classList.contains('open');
+      document.querySelectorAll('.custom-select-container.open').forEach(c => c.classList.remove('open'));
+      if (!isOpen) wrapper.classList.add('open');
+    };
+
+    optionsContainer.querySelectorAll('.custom-select-option').forEach(opt => {
+      opt.onclick = (e) => {
+        e.stopPropagation();
+        const val = opt.dataset.value;
+        const optContent = opt.querySelector('.opt-content');
+        const displayHTML = optContent ? optContent.innerHTML : opt.textContent.trim();
+
+        hiddenInput.value = val;
+        textSpan.innerHTML = displayHTML;
+
+        optionsContainer.querySelectorAll('.custom-select-option').forEach(o => o.classList.remove('selected'));
+        opt.classList.add('selected');
+
+        wrapper.classList.remove('open');
+      };
+    });
+  }
+
+  function setCustomSelectValue(wrapperId, hiddenInputId, value) {
+    const wrapper = document.getElementById(wrapperId);
+    const hiddenInput = document.getElementById(hiddenInputId);
+    if (!wrapper || !hiddenInput) return;
+
+    hiddenInput.value = value;
+    const opt = wrapper.querySelector(`.custom-select-option[data-value="${value}"]`);
+    const textSpan = wrapper.querySelector('.custom-select-text');
+    if (opt && textSpan) {
+      const optContent = opt.querySelector('.opt-content');
+      textSpan.innerHTML = optContent ? optContent.innerHTML : opt.textContent.trim();
+      wrapper.querySelectorAll('.custom-select-option').forEach(o => o.classList.remove('selected'));
+      opt.classList.add('selected');
+    }
+  }
+
+  function renderProfilesList() {
+    const container = document.getElementById('profilesListContainer');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const profiles = getProfiles();
+    const activeId = getActiveProfileId();
+
+    profiles.forEach(p => {
+      const isActive = (p.id === activeId);
+      const card = document.createElement('div');
+      card.className = `profile-card ${isActive ? 'active' : ''}`;
+
+      const left = document.createElement('div');
+      left.className = 'profile-card-left';
+      left.innerHTML = `
+        <i class="ph ${isActive ? 'ph-check-circle' : 'ph-circle'}"></i>
+        <span class="profile-card-title">${p.name}</span>
+        ${isActive ? '<span class="profile-card-tag">Активний</span>' : ''}
+      `;
+      left.addEventListener('click', () => {
+        if (!isActive) {
+          switchProfile(p.id);
+        }
+      });
+
+      const actions = document.createElement('div');
+      actions.className = 'profile-card-actions';
+
+      // Show delete button only for non-active profiles when multiple exist
+      if (!isActive && profiles.length > 1) {
+        const delBtn = document.createElement('button');
+        delBtn.className = 'profile-delete-btn';
+        delBtn.title = 'Видалити цей розклад';
+        delBtn.innerHTML = '<i class="ph ph-trash"></i>';
+        delBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          deleteProfile(p.id, p.name);
+        });
+        actions.appendChild(delBtn);
+      }
+
+      card.appendChild(left);
+      card.appendChild(actions);
+      container.appendChild(card);
+    });
+  }
+
+  function switchProfile(id) {
+    setActiveProfileId(id);
+    updateProfileUI();
+    renderSchedule();
+  }
+
+  function deleteProfile(id, name) {
+    if (!confirm(`Ви дійсно бажаєте видалити розклад "${name}"?`)) return;
+    let profiles = getProfiles();
+    profiles = profiles.filter(p => p.id !== id);
+    setProfiles(profiles);
+
+    if (getActiveProfileId() === id && profiles.length > 0) {
+      setActiveProfileId(profiles[0].id);
+    }
+    updateProfileUI();
+    renderSchedule();
   }
 
   function calculateCurrentWeekAndDay() {
     const now = new Date();
-
-    // Day of week: 0 is Sunday, 1 is Monday ... 6 is Saturday
     let dayOfWeek = now.getDay();
-
-    // If weekend (0 or 6), jump to next Monday
     let dateForCalc = new Date(now.getTime());
+
     if (dayOfWeek === 0) {
       dateForCalc.setDate(dateForCalc.getDate() + 1);
-      selectedDay = 1;
-    } else if (dayOfWeek === 6) {
-      dateForCalc.setDate(dateForCalc.getDate() + 2);
       selectedDay = 1;
     } else {
       selectedDay = dayOfWeek;
     }
 
-    // Reset dateForCalc to midnight for accurate week calc
     dateForCalc.setHours(0, 0, 0, 0);
-
     const diffTime = dateForCalc.getTime() - START_DATE.getTime();
     const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
     const currentWeekNumber = Math.floor(diffDays / 7);
 
-    // Even week (0, 2, 4...) -> Numerator, Odd week (1, 3, 5...) -> Denominator
     currentWeekType = (currentWeekNumber % 2 === 0) ? 'numerator' : 'denominator';
 
-    // Update UI
     updateWeekToggleUI();
     updateDayTabsUI();
   }
@@ -120,7 +399,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // Update active day column on mobile view
     document.querySelectorAll('.day-column').forEach(col => {
       if (parseInt(col.dataset.day) === selectedDay) {
         col.classList.add('active');
@@ -131,37 +409,28 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function setupEventListeners() {
-    // Week toggle - direct container click & input listener
     const weekToggleContainer = document.getElementById('weekToggle');
     if (weekToggleContainer) {
       weekToggleContainer.addEventListener('click', (e) => {
         const numLabel = document.getElementById('num-label');
         const denLabel = document.getElementById('den-label');
-
         if (e.target === numLabel || e.target.id === 'num-week') {
           setWeekType('numerator');
         } else if (e.target === denLabel || e.target.id === 'den-week') {
           setWeekType('denominator');
         } else {
-          // Calculate which half was clicked
           const rect = weekToggleContainer.getBoundingClientRect();
           const clickX = e.clientX - rect.left;
-          if (clickX < rect.width / 2) {
-            setWeekType('numerator');
-          } else {
-            setWeekType('denominator');
-          }
+          if (clickX < rect.width / 2) setWeekType('numerator');
+          else setWeekType('denominator');
         }
       });
     }
 
     weekInputs.forEach(input => {
-      input.addEventListener('change', (e) => {
-        setWeekType(e.target.value);
-      });
+      input.addEventListener('change', (e) => setWeekType(e.target.value));
     });
 
-    // Day tabs
     dayTabs.forEach(tab => {
       tab.addEventListener('click', (e) => {
         selectedDay = parseInt(e.currentTarget.dataset.day);
@@ -169,164 +438,363 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
-    // Theme toggle (both mobile & desktop buttons)
     themeToggleBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         const currentTheme = document.documentElement.getAttribute('data-theme');
-        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        setTheme(newTheme);
+        setTheme(currentTheme === 'dark' ? 'light' : 'dark');
       });
     });
 
-    // Notify toggle (both mobile & desktop buttons)
     notifyToggleBtns.forEach(btn => {
       btn.addEventListener('click', handleNotifyToggle);
     });
 
-    // Group Selection Modal (Option A)
-    const desktopGroupBtn = document.getElementById('desktopGroupBtn');
-    const mobileGroupBtn = document.getElementById('mobileGroupBtn');
-    const groupModalBackdrop = document.getElementById('groupModalBackdrop');
-    const closeGroupModal = document.getElementById('closeGroupModal');
-    const groupModal = document.getElementById('groupModal');
+    // Profile Modal
+    const profileModalBackdrop = document.getElementById('profileModalBackdrop');
+    if (desktopProfileBtn) desktopProfileBtn.addEventListener('click', openProfileModal);
+    if (mobileProfileBtn) mobileProfileBtn.addEventListener('click', openProfileModal);
+    
+    document.getElementById('closeProfileModal').addEventListener('click', () => {
+      profileModalBackdrop.classList.remove('open');
+    });
 
-    function openModal() {
-      if (groupModalBackdrop) groupModalBackdrop.classList.add('open');
-    }
-
-    function closeModal() {
-      if (groupModalBackdrop) groupModalBackdrop.classList.remove('open');
-    }
-
-    if (desktopGroupBtn) desktopGroupBtn.addEventListener('click', openModal);
-    if (mobileGroupBtn) mobileGroupBtn.addEventListener('click', openModal);
-    if (closeGroupModal) closeGroupModal.addEventListener('click', closeModal);
-
-    if (groupModalBackdrop) {
-      groupModalBackdrop.addEventListener('click', (e) => {
-        if (e.target === groupModalBackdrop) closeModal();
-      });
-    }
-
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && groupModalBackdrop && groupModalBackdrop.classList.contains('open')) {
-        closeModal();
+    document.getElementById('saveProfileBtn').addEventListener('click', () => {
+      const newName = document.getElementById('profileNameInput').value.trim();
+      if (newName) {
+        const profile = getActiveProfile();
+        if (profile) {
+          profile.name = newName;
+          saveActiveProfile(profile);
+          updateProfileUI();
+          alert(`Назву розкладу змінено на "${newName}"`);
+        }
+      } else {
+        alert('Введіть назву розкладу!');
       }
     });
 
-    // Course chip switching
-    const courseChips = document.querySelectorAll('.course-chip');
-    const searchInput = document.getElementById('groupSearchInput');
-    
-    let currentCourseFilter = 'all';
-    let currentSearchQuery = '';
+    const addEmptyProfileBtn = document.getElementById('addEmptyProfileBtn');
+    if (addEmptyProfileBtn) {
+      addEmptyProfileBtn.addEventListener('click', () => {
+        const name = prompt('Введіть назву для нового розкладу:', 'Друга спеціальність');
+        if (!name || !name.trim()) return;
 
-    courseChips.forEach(chip => {
-      chip.addEventListener('click', () => {
-        courseChips.forEach(c => c.classList.remove('active'));
-        chip.classList.add('active');
-        currentCourseFilter = chip.dataset.course;
-        renderGroupList(currentCourseFilter, currentSearchQuery);
+        const newProfile = {
+          id: 'prof_' + Date.now(),
+          name: name.trim(),
+          numerator: createEmptySchedule(),
+          denominator: createEmptySchedule()
+        };
+
+        const profiles = getProfiles();
+        profiles.push(newProfile);
+        setProfiles(profiles);
+        setActiveProfileId(newProfile.id);
+
+        updateProfileUI();
+        renderSchedule();
+      });
+    }
+
+    document.getElementById('resetScheduleBtn').addEventListener('click', () => {
+      const profile = getActiveProfile();
+      if (!profile) return;
+      if (confirm(`Очистити всі пари активного розкладу "${profile.name}"?`)) {
+        setDB(createEmptySchedule(), createEmptySchedule());
+        renderSchedule();
+      }
+    });
+
+    const loadTemplateBtn = document.getElementById('loadTemplateBtn');
+    if (loadTemplateBtn) {
+      loadTemplateBtn.addEventListener('click', () => {
+        const sel = document.getElementById('templateSelect');
+        const tplName = sel.value;
+        if (!tplName) {
+          alert('Будь ласка, оберіть шаблон.');
+          return;
+        }
+
+        fetch('assets/schedule.json?v=' + Date.now())
+          .then(res => res.json())
+          .then(data => {
+             const tpl = data.templates && data.templates[tplName];
+             if (tpl) {
+               const profiles = getProfiles();
+               const existingIdx = profiles.findIndex(p => p.name === tplName);
+
+               if (existingIdx !== -1) {
+                 profiles[existingIdx].numerator = JSON.parse(JSON.stringify(tpl.numerator));
+                 profiles[existingIdx].denominator = JSON.parse(JSON.stringify(tpl.denominator));
+                 setProfiles(profiles);
+                 setActiveProfileId(profiles[existingIdx].id);
+                 setDB(tpl.numerator, tpl.denominator);
+                 updateProfileUI();
+                 renderSchedule();
+                 setCustomSelectValue('templateSelectWrapper', 'templateSelect', '');
+                 alert(`Розклад "${tplName}" успішно оновлено з файлу!`);
+               } else {
+                 const newProfile = {
+                   id: 'prof_' + Date.now(),
+                   name: tplName,
+                   numerator: JSON.parse(JSON.stringify(tpl.numerator)),
+                   denominator: JSON.parse(JSON.stringify(tpl.denominator))
+                 };
+                 profiles.push(newProfile);
+                 setProfiles(profiles);
+                 setActiveProfileId(newProfile.id);
+                 setDB(tpl.numerator, tpl.denominator);
+                 updateProfileUI();
+                 renderSchedule();
+                 setCustomSelectValue('templateSelectWrapper', 'templateSelect', '');
+                 alert(`Розклад "${tplName}" успішно додано до ваших розкладів!`);
+               }
+             } else {
+               alert('Шаблон не знайдено.');
+             }
+          })
+          .catch(err => {
+             console.error(err);
+             alert('Помилка завантаження шаблону.');
+          });
+      });
+    }
+
+    // Editor Modal
+    const editorModalBackdrop = document.getElementById('editorModalBackdrop');
+    document.getElementById('editScheduleBtn').addEventListener('click', () => {
+      profileModalBackdrop.classList.remove('open');
+      openEditorModal();
+    });
+    
+    document.getElementById('closeEditorModal').addEventListener('click', () => {
+      editorModalBackdrop.classList.remove('open');
+      renderSchedule(); // Render changes when exiting editor
+    });
+
+    // Editor Week Toggle
+    const editorWeekToggleContainer = document.getElementById('editorWeekToggle');
+    editorWeekToggleContainer.addEventListener('click', (e) => {
+      const numLabel = document.getElementById('editor-num-label');
+      const denLabel = document.getElementById('editor-den-label');
+      if (e.target === numLabel || e.target.id === 'editor-num-week') {
+        editorWeekType = 'numerator';
+      } else if (e.target === denLabel || e.target.id === 'editor-den-week') {
+        editorWeekType = 'denominator';
+      } else {
+        const rect = editorWeekToggleContainer.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        editorWeekType = (clickX < rect.width / 2) ? 'numerator' : 'denominator';
+      }
+      editorWeekToggleContainer.setAttribute('data-week', editorWeekType);
+      document.getElementById('editor-num-week').checked = (editorWeekType === 'numerator');
+      document.getElementById('editor-den-week').checked = (editorWeekType === 'denominator');
+      renderEditorClasses();
+    });
+
+    // Editor Days Nav
+    document.querySelectorAll('#editorDaysNav .course-chip').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        document.querySelectorAll('#editorDaysNav .course-chip').forEach(c => c.classList.remove('active'));
+        e.currentTarget.classList.add('active');
+        editorSelectedDay = parseInt(e.currentTarget.dataset.editday);
+        renderEditorClasses();
       });
     });
 
-    if (searchInput) {
-      searchInput.addEventListener('input', (e) => {
-        currentSearchQuery = e.target.value;
-        renderGroupList(currentCourseFilter, currentSearchQuery);
-      });
-    }
+    // Add Class Button
+    document.getElementById('addClassBtn').addEventListener('click', () => {
+       openEditClassModal(null);
+    });
+
+    // Edit Class Modal
+    const editClassModalBackdrop = document.getElementById('editClassModalBackdrop');
+    document.getElementById('closeEditClassModal').addEventListener('click', () => {
+      editClassModalBackdrop.classList.remove('open');
+    });
+
+    document.getElementById('saveClassBtn').addEventListener('click', saveClass);
+    document.getElementById('deleteClassBtn').addEventListener('click', deleteClass);
+
+    // Initialize custom selects
+    initCustomSelect('templateSelectWrapper', 'templateSelect');
+    initCustomSelect('editClassTypeWrapper', 'editClassType');
+
+    // Close any open custom select when clicking outside
+    document.addEventListener('click', () => {
+      document.querySelectorAll('.custom-select-container.open').forEach(c => c.classList.remove('open'));
+    });
   }
 
-  function renderGroupList(filterCourse = 'all', searchQuery = '') {
-    const groupListEl = document.getElementById('groupList');
-    if (!groupListEl || !scheduleData || !scheduleData.schedule) return;
+  function openProfileModal() {
+    updateProfileUI();
+    document.getElementById('profileModalBackdrop').classList.add('open');
+  }
 
-    groupListEl.innerHTML = '';
+  function openEditorModal() {
+    editorWeekType = currentWeekType;
+    editorSelectedDay = selectedDay > 5 ? 1 : selectedDay; // Default to Mon if Sunday
     
-    const selectedGroup = localStorage.getItem('selected_group') || Object.keys(scheduleData.schedule)[0];
+    document.getElementById('editorWeekToggle').setAttribute('data-week', editorWeekType);
+    document.getElementById('editor-num-week').checked = (editorWeekType === 'numerator');
+    document.getElementById('editor-den-week').checked = (editorWeekType === 'denominator');
     
-    // Convert schedule object to array
-    const groups = Object.entries(scheduleData.schedule).map(([name, data]) => ({
-      name,
-      course: data.course || '',
-      specialty: data.specialty || ''
-    }));
-
-    // Filter
-    const query = searchQuery.toLowerCase();
-    const filteredGroups = groups.filter(g => {
-      // For masters, chip has "магістр", excel has "1р.н." or something else for course?
-      // Let's just do a substring match.
-      let matchCourse = false;
-      if (filterCourse === 'all') {
-        matchCourse = true;
-      } else if (filterCourse === 'магістр') {
-        matchCourse = g.course.toLowerCase().includes('м') || g.course.toLowerCase().includes('магістр') || g.name.toLowerCase().includes('м');
-      } else {
-        // e.g. "2 курс" -> matches "2 курс"
-        matchCourse = g.course.toLowerCase().includes(filterCourse.toLowerCase().replace(' курс', ''));
-      }
-
-      const matchSearch = g.name.toLowerCase().includes(query) || g.specialty.toLowerCase().includes(query);
-      return matchCourse && matchSearch;
+    document.querySelectorAll('#editorDaysNav .course-chip').forEach(btn => {
+      if(parseInt(btn.dataset.editday) === editorSelectedDay) btn.classList.add('active');
+      else btn.classList.remove('active');
     });
 
-    if (filteredGroups.length === 0) {
-      groupListEl.innerHTML = `<div class="day-empty" style="padding: 20px 0; color: var(--color-ash); font-size: 13px; text-align: center;"><span>Нічого не знайдено</span></div>`;
+    document.getElementById('editorModalBackdrop').classList.add('open');
+    renderEditorClasses();
+  }
+
+  function renderEditorClasses() {
+    const container = document.getElementById('editorClassesContainer');
+    container.innerHTML = '';
+    
+    const db = getDB();
+    const schedule = editorWeekType === 'numerator' ? db.num : db.den;
+    const dayClasses = schedule[editorSelectedDay] || [];
+
+    // Sort by pair number
+    dayClasses.sort((a, b) => a.pair - b.pair);
+
+    if (dayClasses.length === 0) {
+      container.innerHTML = `<div style="text-align: center; color: var(--color-ash); padding: 20px;">Пар немає. Додайте нову пару.</div>`;
       return;
     }
 
-    filteredGroups.forEach(g => {
-      const btn = document.createElement('button');
-      btn.className = `group-item ${g.name === selectedGroup ? 'active' : ''}`;
-      btn.dataset.group = g.name;
-      
-      btn.innerHTML = `
-        <div class="group-item-info">
-          <span class="group-item-name">${g.name}</span>
-          <span class="group-item-spec">${g.specialty} · ${g.course}</span>
-        </div>
-        <i class="ph ph-check-circle group-item-check"></i>
-      `;
-      
-      btn.addEventListener('click', () => {
-        localStorage.setItem('selected_group', g.name);
-        document.querySelectorAll('.selected-group-name').forEach(el => {
-          el.textContent = g.name;
-        });
-        
-        renderGroupList(filterCourse, searchQuery);
-        renderSchedule();
-        
-        const groupModalBackdrop = document.getElementById('groupModalBackdrop');
-        if (groupModalBackdrop) groupModalBackdrop.classList.remove('open');
-      });
+    dayClasses.forEach(cls => {
+      const timeStr = PAIR_TIMES[cls.pair] || '';
+      const typeClass = cls.type === 'Лекція' ? 'lecture' : 'practice';
 
-      groupListEl.appendChild(btn);
+      const card = document.createElement('div');
+      card.className = 'class-card';
+      card.style.cursor = 'pointer';
+      card.innerHTML = `
+        <div class="class-header">
+          <div class="class-time">
+            <i class="ph ph-clock"></i>
+            <span>${cls.pair} пара · ${timeStr}</span>
+          </div>
+          <div class="class-badges">
+            <div class="class-type ${typeClass}">${cls.type}</div>
+          </div>
+        </div>
+        <div class="class-subject">${cls.subject}</div>
+        <div class="class-footer">
+          <div class="class-location">
+            <i class="ph ph-map-pin"></i>
+            <span>${cls.location || '-'}</span>
+          </div>
+        </div>
+      `;
+      card.addEventListener('click', () => openEditClassModal(cls));
+      container.appendChild(card);
     });
+  }
+
+  function openEditClassModal(cls = null) {
+    const title = document.getElementById('editClassTitle');
+    const btnDel = document.getElementById('deleteClassBtn');
+    
+    if (cls) {
+      title.textContent = 'Редагування пари';
+      btnDel.style.display = 'block';
+      document.getElementById('editClassId').value = cls.id;
+      document.getElementById('editClassNum').value = cls.pair;
+      document.getElementById('editClassSubject').value = cls.subject;
+      document.getElementById('editClassLocation').value = cls.location || '';
+      document.getElementById('editClassLink').value = cls.link || '';
+      document.getElementById('editClassType').value = cls.type;
+      setCustomSelectValue('editClassTypeWrapper', 'editClassType', cls.type);
+    } else {
+      title.textContent = 'Нова пара';
+      btnDel.style.display = 'none';
+      document.getElementById('editClassId').value = '';
+      document.getElementById('editClassNum').value = '';
+      document.getElementById('editClassSubject').value = '';
+      document.getElementById('editClassLocation').value = '';
+      document.getElementById('editClassLink').value = '';
+      document.getElementById('editClassType').value = 'Лекція';
+      setCustomSelectValue('editClassTypeWrapper', 'editClassType', 'Лекція');
+    }
+    document.getElementById('editClassModalBackdrop').classList.add('open');
+  }
+
+  function saveClass() {
+    const id = document.getElementById('editClassId').value;
+    const pair = parseInt(document.getElementById('editClassNum').value);
+    const subject = document.getElementById('editClassSubject').value.trim();
+    const location = document.getElementById('editClassLocation').value.trim();
+    const link = document.getElementById('editClassLink').value.trim();
+    const type = document.getElementById('editClassType').value;
+
+    if (!pair || pair < 1 || pair > 7 || !subject) {
+      alert("Вкажіть номер пари та предмет!");
+      return;
+    }
+
+    const db = getDB();
+    const schedule = editorWeekType === 'numerator' ? db.num : db.den;
+    
+    // Check if pair already exists (and it's not the one we are editing)
+    const existing = schedule[editorSelectedDay].find(c => c.pair === pair);
+    if (existing && existing.id !== id) {
+       alert(`Пара ${pair} вже існує у цьому дні! Видаліть або змініть її спочатку.`);
+       return;
+    }
+
+    if (id) {
+      const idx = schedule[editorSelectedDay].findIndex(c => c.id === id);
+      if (idx !== -1) {
+        schedule[editorSelectedDay][idx] = { id, pair, subject, location, link, type };
+      }
+    } else {
+      if(!schedule[editorSelectedDay]) schedule[editorSelectedDay] = [];
+      schedule[editorSelectedDay].push({
+        id: Date.now().toString(),
+        pair, subject, location, link, type
+      });
+    }
+
+    setDB(db.num, db.den);
+    document.getElementById('editClassModalBackdrop').classList.remove('open');
+    renderEditorClasses();
+  }
+
+  function deleteClass() {
+    if(!confirm("Видалити цю пару?")) return;
+    const id = document.getElementById('editClassId').value;
+    const db = getDB();
+    const schedule = editorWeekType === 'numerator' ? db.num : db.den;
+    
+    schedule[editorSelectedDay] = schedule[editorSelectedDay].filter(c => c.id !== id);
+    
+    setDB(db.num, db.den);
+    document.getElementById('editClassModalBackdrop').classList.remove('open');
+    renderEditorClasses();
   }
 
   function renderSchedule() {
     scheduleContainer.innerHTML = '';
-
-    if (!scheduleData || !scheduleData.schedule) {
-      return;
-    }
+    const db = getDB();
+    const schedule = currentWeekType === 'numerator' ? db.num : db.den;
 
     const now = new Date();
     const todayDayOfWeek = now.getDay();
     const currentTotalM = now.getHours() * 60 + now.getMinutes();
 
-    // Render all 5 weekdays (1 to 5)
-    for (let day = 1; day <= 5; day++) {
+    let maxDay = 5;
+    if (schedule["6"] && schedule["6"].length > 0) maxDay = 6;
+
+    for (let day = 1; day <= maxDay; day++) {
       const dayColumn = document.createElement('div');
       dayColumn.className = `day-column ${day === selectedDay ? 'active' : ''}`;
       dayColumn.dataset.day = day;
 
       const isToday = (day === todayDayOfWeek);
 
-      // Day Column Header
       const headerDiv = document.createElement('div');
       headerDiv.className = `day-column-header ${isToday ? 'is-today' : ''}`;
       headerDiv.innerHTML = `
@@ -335,25 +803,11 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
       dayColumn.appendChild(headerDiv);
 
-      // Day Classes Container
       const classesDiv = document.createElement('div');
       classesDiv.className = 'day-column-classes';
 
-      const groupName = localStorage.getItem('selected_group') || Object.keys(scheduleData.schedule)[0];
-      const groupSchedule = scheduleData.schedule[groupName];
-      const rawSchedule = groupSchedule ? (groupSchedule[day]?.classes || []) : [];
-      
-      const filteredSchedule = [];
-      rawSchedule.forEach(cls => {
-        const weekData = cls[currentWeekType];
-        if (weekData) {
-          filteredSchedule.push({
-            num: cls.pair,
-            time: cls.time,
-            ...weekData
-          });
-        }
-      });
+      const filteredSchedule = schedule[day] || [];
+      filteredSchedule.sort((a,b) => a.pair - b.pair);
 
       if (filteredSchedule.length === 0) {
         classesDiv.innerHTML = `
@@ -363,19 +817,14 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
         `;
       } else {
-        const hasAnyLocation = filteredSchedule.some(cls => cls.location && cls.location.trim() !== '');
-
         filteredSchedule.forEach((cls, index) => {
-          const [startStr, endStr] = cls.time.split('-');
-          const link = cls.meet_url || '#';
+          const timeStr = PAIR_TIMES[cls.pair] || '';
+          const [startStr, endStr] = timeStr.split('-');
+          const link = cls.link || '#';
           
           let typeLabel = cls.type;
-          if (!typeLabel) {
-             typeLabel = hasAnyLocation ? 'Практика' : 'Лекція';
-          }
           const typeClass = typeLabel === 'Лекція' ? 'lecture' : 'practice';
 
-          // Live class check
           let isLive = false;
           if (isToday && startStr && endStr) {
             const [startH, startM] = startStr.split(':').map(Number);
@@ -407,28 +856,19 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
             `;
           } else {
-            if (hasAnyLocation) {
-              locationHTML = `
-                <div class="class-location" title="Не вказано">
-                  <i class="ph ph-map-pin"></i>
-                  <span>-</span>
-                </div>
-              `;
-            } else {
-              locationHTML = `
-                <div class="class-location dist" title="Дистанційно">
-                  <i class="ph ph-laptop"></i>
-                  <span>Дистант</span>
-                </div>
-              `;
-            }
+            locationHTML = `
+              <div class="class-location dist" title="Дистанційно">
+                <i class="ph ph-laptop"></i>
+                <span>Дистант</span>
+              </div>
+            `;
           }
 
           card.innerHTML = `
             <div class="class-header">
               <div class="class-time">
                 <i class="ph ph-clock"></i>
-                <span>${cls.num} пара · ${cls.time}</span>
+                <span>${cls.pair} пара · ${timeStr}</span>
               </div>
               <div class="class-badges">
                 ${liveBadgeHTML}
@@ -440,7 +880,7 @@ document.addEventListener('DOMContentLoaded', () => {
               ${locationHTML}
               <a href="${link}" target="_blank" rel="noopener noreferrer" class="meet-btn">
                 <i class="ph ph-video-camera"></i>
-                Meet
+                Перейти
               </a>
             </div>
           `;
@@ -463,11 +903,8 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       setTheme('light');
     }
-
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-      if (!localStorage.getItem('theme')) {
-        setTheme(e.matches ? 'dark' : 'light');
-      }
+      if (!localStorage.getItem('theme')) setTheme(e.matches ? 'dark' : 'light');
     });
   }
 
@@ -496,7 +933,6 @@ document.addEventListener('DOMContentLoaded', () => {
       notifyToggleBtns.forEach(b => b.style.display = 'none');
       return;
     }
-
     if (Notification.permission === "granted") {
       notifyToggleBtns.forEach(b => b.classList.add('active'));
     }
@@ -521,39 +957,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function setupAlarms() {
     if (Notification.permission !== "granted") return;
-
     setInterval(() => {
-      if (!scheduleData) return;
       const now = new Date();
-
-      // Check current day and week
       let dayOfWeek = now.getDay();
-      if (dayOfWeek === 0 || dayOfWeek === 6) return; // Weekend
+      if (dayOfWeek === 0) return;
 
-      const groupName = localStorage.getItem('selected_group') || Object.keys(scheduleData.schedule)[0];
-      const groupSchedule = scheduleData.schedule[groupName];
-      if (!groupSchedule) return;
+      const db = getDB();
+      const schedule = currentWeekType === 'numerator' ? db.num : db.den;
+      const dayData = schedule[dayOfWeek] || [];
 
-      const dayData = groupSchedule[dayOfWeek];
-      if (!dayData || !dayData.classes) return;
-
-      dayData.classes.forEach(cls => {
-        const weekData = cls[currentWeekType];
-        if (!weekData) return;
-
-        const [startStr, endStr] = cls.time.split('-');
-        if (!startStr) return;
+      dayData.forEach(cls => {
+        const timeStr = PAIR_TIMES[cls.pair];
+        if (!timeStr) return;
+        
+        const [startStr] = timeStr.split('-');
         const [startH, startM] = startStr.split(':').map(Number);
 
         let targetTime = new Date();
         targetTime.setHours(startH, startM, 0, 0);
-
-        // 10 minutes before
         targetTime.setMinutes(targetTime.getMinutes() - 10);
 
         if (now.getHours() === targetTime.getHours() && now.getMinutes() === targetTime.getMinutes() && now.getSeconds() === 0) {
           new Notification("Скоро пара!", {
-            body: `${weekData.subject} почнеться за 10 хвилин.`,
+            body: `${cls.subject} почнеться за 10 хвилин.`,
             icon: "assets/schedule-plus.svg"
           });
         }
@@ -565,12 +991,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js')
-          .then(reg => {
-            console.log('ServiceWorker registered with scope:', reg.scope);
-          })
-          .catch(err => {
-            console.warn('ServiceWorker registration failed:', err);
-          });
+          .catch(err => console.warn('ServiceWorker registration failed:', err));
       });
     }
   }

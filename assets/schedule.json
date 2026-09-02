@@ -1,41 +1,256 @@
 {
-  "times": {
-    "1": {"start": "08:30", "end": "09:50"},
-    "2": {"start": "10:10", "end": "11:30"},
-    "3": {"start": "11:50", "end": "13:10"},
-    "4": {"start": "13:30", "end": "14:50"},
-    "5": {"start": "15:10", "end": "16:30"}
-  },
-  "links": {
-    "practice": "https://meet.google.com/afn-sgtn-azm",
-    "lecture": "https://meet.google.com/dqa-xzow-mps"
-  },
-  "schedule": {
-    "1": [
-      {"num": 1, "subject": "Компонентна база та схемотехніка в системах захисту інформації", "type": "lecture", "location": "Лекція / Дистант", "link": "lecture"},
-      {"num": 2, "subject": "Комп'ютерна логіка", "type": "lecture", "location": "Лекція / Дистант", "link": "lecture"}
-    ],
-    "2": [
-      {"num": 1, "subject": "Фізичне виховання", "type": "practice", "location": "Спортзал", "link": "practice"},
-      {"num": 2, "subject": "Компонентна база та схемотехніка в системах захисту інформації", "type": "practice", "location": "кабінет 206 корпус 15", "link": "practice"},
-      {"num": 3, "subject": "Організаційне забезпечення захисту інформації, державні та міжнародні вимоги з кібербезпеки", "type": "practice", "location": "кабінет 223 корпус 15", "link": "practice"},
-      {"num": 4, "subject": "Іноземна мова", "type": "practice", "location": "кабінет 317 корпус 11", "link": "practice"}
-    ],
-    "3": [
-      {"num": 2, "subject": "Основи кібербезпеки та захисту", "type": "practice", "location": "кабінет 224 корпус 15", "link": "practice"},
-      {"num": 3, "subject": "Проектування, впровадження та супровід комплексних систем захисту інформації", "type": "practice", "location": "кабінет 231 корпус 15", "link": "practice"},
-      {"num": 4, "subject": "Комп'ютерна логіка", "type": "practice", "location": "кабінет 206 корпус 15", "link": "practice"}
-    ],
-    "4": [
-      {"num": 1, "subject": "Організаційне забезпечення захисту інформації, державні та міжнародні вимоги з кібербезпеки", "type": "lecture", "location": "Лекція / Дистант", "link": "lecture"},
-      {"num": 2, "subject": "Проектування, впровадження та супровід комплексних систем захисту інформації", "type": "lecture", "location": "Лекція / Дистант", "link": "lecture"},
-      {"num": 3, "subject": "Проектування, впровадження та супровід комплексних систем захисту інформації", "type": "lecture", "location": "Лекція / Дистант", "link": "lecture", "weekType": "numerator"},
-      {"num": 3, "subject": "Основи кібербезпеки та захисту", "type": "lecture", "location": "Лекція / Дистант", "link": "lecture", "weekType": "denominator"}
-    ],
-    "5": [
-      {"num": 2, "subject": "Організаційне забезпечення захисту інформації, державні та міжнародні вимоги з кібербезпеки", "type": "practice", "location": "кабінет 231а корпус 15", "link": "practice"},
-      {"num": 3, "subject": "Комп'ютерна логіка", "type": "practice", "location": "кабінет 206 корпус 15", "link": "practice", "weekType": "numerator"},
-      {"num": 3, "subject": "Проектування, впровадження та супровід комплексних систем захисту інформації", "type": "practice", "location": "кабінет 206 корпус 15", "link": "practice", "weekType": "denominator"}
-    ]
+  "templates": {
+    "КІБ-25011б": {
+      "numerator": {
+        "1": [
+          {
+            "id": "8ec82e32-18c5-48d8-ae43-5deec7ff284a",
+            "pair": 1,
+            "subject": "Компонентна база та схемотехніка в системах захисту інформації",
+            "location": "Лекція",
+            "link": "https://meet.google.com/dqa-xzow-mps",
+            "type": "Лекція"
+          },
+          {
+            "id": "1edfe38a-230f-440a-bc16-205d7a7afe17",
+            "pair": 2,
+            "subject": "Комп'ютерна логіка",
+            "location": "Лекція",
+            "link": "https://meet.google.com/dqa-xzow-mps",
+            "type": "Лекція"
+          }
+        ],
+        "2": [
+          {
+            "id": "db11fbfc-cbfb-43bb-91b1-68691af43eac",
+            "pair": 1,
+            "subject": "Фізичне виховання",
+            "location": "Спортзал",
+            "link": "https://meet.google.com/afn-sgtn-azm",
+            "type": "Практика"
+          },
+          {
+            "id": "7ac61ab0-21ee-46c1-ac92-6562abe319c2",
+            "pair": 2,
+            "subject": "Компонентна база та схемотехніка в системах захисту інформації",
+            "location": "кабінет 206 корпус 15",
+            "link": "https://meet.google.com/afn-sgtn-azm",
+            "type": "Практика"
+          },
+          {
+            "id": "efb0cbfc-ea2e-4101-a4e6-3bdee7180e59",
+            "pair": 3,
+            "subject": "Організаційне забезпечення захисту інформації, державні та міжнародні вимоги з кібербезпеки",
+            "location": "кабінет 223 корпус 15",
+            "link": "https://meet.google.com/afn-sgtn-azm",
+            "type": "Практика"
+          },
+          {
+            "id": "7dd6890f-eb70-4945-9c83-d490b1679a20",
+            "pair": 4,
+            "subject": "Іноземна мова",
+            "location": "кабінет 317 корпус 11",
+            "link": "https://meet.google.com/afn-sgtn-azm",
+            "type": "Практика"
+          }
+        ],
+        "3": [
+          {
+            "id": "db28d1a5-b956-4457-80bf-c0b271872f4d",
+            "pair": 2,
+            "subject": "Основи кібербезпеки та захисту",
+            "location": "кабінет 224 корпус 15",
+            "link": "https://meet.google.com/afn-sgtn-azm",
+            "type": "Практика"
+          },
+          {
+            "id": "50a95bb2-750e-4c0e-bdc9-ff02820720f3",
+            "pair": 3,
+            "subject": "Проектування, впровадження та супровід комплексних систем захисту інформації",
+            "location": "кабінет 231 корпус 15",
+            "link": "https://meet.google.com/afn-sgtn-azm",
+            "type": "Практика"
+          },
+          {
+            "id": "161e7a0b-25a9-41bd-8574-16c3592ddd50",
+            "pair": 4,
+            "subject": "Комп'ютерна логіка",
+            "location": "кабінет 206 корпус 15",
+            "link": "https://meet.google.com/afn-sgtn-azm",
+            "type": "Практика"
+          }
+        ],
+        "4": [
+          {
+            "id": "65cec5a0-2783-421e-9680-81c0a199915a",
+            "pair": 1,
+            "subject": "Організаційне забезпечення захисту інформації, державні та міжнародні вимоги з кібербезпеки",
+            "location": "Лекція",
+            "link": "https://meet.google.com/dqa-xzow-mps",
+            "type": "Лекція"
+          },
+          {
+            "id": "0dd767bc-c06e-4aa0-b9de-dc87666549a4",
+            "pair": 2,
+            "subject": "Проектування, впровадження та супровід комплексних систем захисту інформації",
+            "location": "Лекція",
+            "link": "https://meet.google.com/dqa-xzow-mps",
+            "type": "Лекція"
+          },
+          {
+            "id": "28279e94-fbdd-48bc-8804-eb6ab043e0bd",
+            "pair": 3,
+            "subject": "Проектування, впровадження та супровід комплексних систем захисту інформації",
+            "location": "Лекція",
+            "link": "https://meet.google.com/dqa-xzow-mps",
+            "type": "Лекція"
+          }
+        ],
+        "5": [
+          {
+            "id": "48329bb2-3d9d-4f80-a618-5ae80b07f839",
+            "pair": 2,
+            "subject": "Організаційне забезпечення захисту інформації, державні та міжнародні вимоги з кібербезпеки",
+            "location": "кабінет 231а корпус 15",
+            "link": "https://meet.google.com/afn-sgtn-azm",
+            "type": "Практика"
+          },
+          {
+            "id": "6b1504d1-9d33-4a1c-a043-e1065fe4422e",
+            "pair": 3,
+            "subject": "Комп'ютерна логіка",
+            "location": "кабінет 206 корпус 15",
+            "link": "https://meet.google.com/afn-sgtn-azm",
+            "type": "Практика"
+          }
+        ],
+        "6": []
+      },
+      "denominator": {
+        "1": [
+          {
+            "id": "906145d0-9709-4d9a-9dca-2bda5fc2663a",
+            "pair": 1,
+            "subject": "Компонентна база та схемотехніка в системах захисту інформації",
+            "location": "Лекція",
+            "link": "https://meet.google.com/dqa-xzow-mps",
+            "type": "Лекція"
+          },
+          {
+            "id": "25397faa-9bfa-4fc7-985d-06e9874c62b3",
+            "pair": 2,
+            "subject": "Комп'ютерна логіка",
+            "location": "Лекція",
+            "link": "https://meet.google.com/dqa-xzow-mps",
+            "type": "Лекція"
+          }
+        ],
+        "2": [
+          {
+            "id": "3ff3e7b6-e0bc-49b4-8a3c-9cb678124ce7",
+            "pair": 1,
+            "subject": "Фізичне виховання",
+            "location": "-",
+            "link": "https://meet.google.com/afn-sgtn-azm",
+            "type": "Практика"
+          },
+          {
+            "id": "1e654ee2-f9b2-4010-ba53-9b7f7ef08033",
+            "pair": 2,
+            "subject": "Компонентна база та схемотехніка в системах захисту інформації",
+            "location": "кабінет 206 корпус 15",
+            "link": "https://meet.google.com/afn-sgtn-azm",
+            "type": "Практика"
+          },
+          {
+            "id": "66d39c74-ed2f-4cdc-bd94-4737ba52ab2a",
+            "pair": 3,
+            "subject": "Організаційне забезпечення захисту інформації, державні та міжнародні вимоги з кібербезпеки",
+            "location": "кабінет 223 корпус 15",
+            "link": "https://meet.google.com/afn-sgtn-azm",
+            "type": "Практика"
+          },
+          {
+            "id": "00dd3e2d-083a-4cf8-86fe-045fdd2cfcd0",
+            "pair": 4,
+            "subject": "Іноземна мова",
+            "location": "кабінет 317 корпус 11",
+            "link": "https://meet.google.com/afn-sgtn-azm",
+            "type": "Практика"
+          }
+        ],
+        "3": [
+          {
+            "id": "7a05e80f-ab2e-4269-95cb-c8ecf6ed059c",
+            "pair": 2,
+            "subject": "Основи кібербезпеки та захисту",
+            "location": "кабінет 224 корпус 15",
+            "link": "https://meet.google.com/afn-sgtn-azm",
+            "type": "Практика"
+          },
+          {
+            "id": "ac2a1920-74ca-477c-ad4f-b6e156ddf7ff",
+            "pair": 3,
+            "subject": "Проектування, впровадження та супровід комплексних систем захисту інформації",
+            "location": "кабінет 231 корпус 15",
+            "link": "https://meet.google.com/afn-sgtn-azm",
+            "type": "Практика"
+          },
+          {
+            "id": "0fa041ee-e99b-4bd6-9a1e-524de513a5cd",
+            "pair": 4,
+            "subject": "Комп'ютерна логіка",
+            "location": "кабінет 206 корпус 15",
+            "link": "https://meet.google.com/afn-sgtn-azm",
+            "type": "Практика"
+          }
+        ],
+        "4": [
+          {
+            "id": "695258f2-6d7f-460b-b6ba-9806dfdf22b5",
+            "pair": 1,
+            "subject": "Організаційне забезпечення захисту інформації, державні та міжнародні вимоги з кібербезпеки",
+            "location": "Лекція",
+            "link": "https://meet.google.com/dqa-xzow-mps",
+            "type": "Лекція"
+          },
+          {
+            "id": "f2fe459f-20f8-4d24-83a6-4c12652fe9ea",
+            "pair": 2,
+            "subject": "Проектування, впровадження та супровід комплексних систем захисту інформації",
+            "location": "Лекція",
+            "link": "https://meet.google.com/dqa-xzow-mps",
+            "type": "Лекція"
+          },
+          {
+            "id": "7e2fcada-30b9-439b-9b07-16d7bf86ae8a",
+            "pair": 3,
+            "subject": "Основи кібербезпеки та захисту",
+            "location": "Лекція",
+            "link": "https://meet.google.com/dqa-xzow-mps",
+            "type": "Лекція"
+          }
+        ],
+        "5": [
+          {
+            "id": "ac72a1b0-5ccc-44fc-9cb2-f2cc92bbe135",
+            "pair": 2,
+            "subject": "Організаційне забезпечення захисту інформації, державні та міжнародні вимоги з кібербезпеки",
+            "location": "кабінет 231а корпус 15",
+            "link": "https://meet.google.com/afn-sgtn-azm",
+            "type": "Практика"
+          },
+          {
+            "id": "9ea7e34d-3ee4-4e83-a1f0-28729470741c",
+            "pair": 3,
+            "subject": "Проектування, впровадження та супровід комплексних систем захисту інформації",
+            "location": "кабінет 206 корпус 15",
+            "link": "https://meet.google.com/afn-sgtn-azm",
+            "type": "Практика"
+          }
+        ],
+        "6": []
+      }
+    }
   }
 }
