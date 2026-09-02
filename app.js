@@ -27,14 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let editorWeekType = 'numerator';
   let editorSelectedDay = 1;
 
-  // Clear old caches except current
-  if ('caches' in window) {
-    caches.keys().then(keys => {
-      keys.forEach(k => {
-        if (k !== 'schedule-plus-v0.6') caches.delete(k);
-      });
-    });
-  }
+
 
   // DOM Elements
   const weekInputs = document.querySelectorAll('input[name="week-type"]');
@@ -245,7 +238,20 @@ document.addEventListener('DOMContentLoaded', () => {
       e.stopPropagation();
       const isOpen = wrapper.classList.contains('open');
       document.querySelectorAll('.custom-select-container.open').forEach(c => c.classList.remove('open'));
-      if (!isOpen) wrapper.classList.add('open');
+      if (!isOpen) {
+        // Adaptively check available space below on all screen sizes
+        const rect = wrapper.getBoundingClientRect();
+        const modal = wrapper.closest('.group-modal');
+        const modalBottom = modal ? Math.min(modal.getBoundingClientRect().bottom, window.innerHeight) : window.innerHeight;
+        const spaceBelow = modalBottom - rect.bottom;
+
+        if (spaceBelow < 140 && rect.top > 120) {
+          wrapper.classList.add('drop-up');
+        } else {
+          wrapper.classList.remove('drop-up');
+        }
+        wrapper.classList.add('open');
+      }
     };
 
     optionsContainer.querySelectorAll('.custom-select-option').forEach(opt => {
@@ -354,8 +360,15 @@ document.addEventListener('DOMContentLoaded', () => {
     let dayOfWeek = now.getDay();
     let dateForCalc = new Date(now.getTime());
 
+    const db = getDB();
+    const hasSaturdayClasses = (db.num && db.num["6"] && db.num["6"].length > 0) ||
+                               (db.den && db.den["6"] && db.den["6"].length > 0);
+
     if (dayOfWeek === 0) {
       dateForCalc.setDate(dateForCalc.getDate() + 1);
+      selectedDay = 1;
+    } else if (dayOfWeek === 6 && !hasSaturdayClasses) {
+      dateForCalc.setDate(dateForCalc.getDate() + 2);
       selectedDay = 1;
     } else {
       selectedDay = dayOfWeek;
@@ -624,6 +637,25 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('click', () => {
       document.querySelectorAll('.custom-select-container.open').forEach(c => c.classList.remove('open'));
     });
+
+    // Close modals on Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        const editClassBackdrop = document.getElementById('editClassModalBackdrop');
+        const editorBackdrop = document.getElementById('editorModalBackdrop');
+        const profileBackdrop = document.getElementById('profileModalBackdrop');
+
+        if (editClassBackdrop && editClassBackdrop.classList.contains('open')) {
+          editClassBackdrop.classList.remove('open');
+        } else if (editorBackdrop && editorBackdrop.classList.contains('open')) {
+          editorBackdrop.classList.remove('open');
+          renderSchedule();
+        } else if (profileBackdrop && profileBackdrop.classList.contains('open')) {
+          profileBackdrop.classList.remove('open');
+        }
+        document.querySelectorAll('.custom-select-container.open').forEach(c => c.classList.remove('open'));
+      }
+    });
   }
 
   function openProfileModal() {
@@ -785,8 +817,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const todayDayOfWeek = now.getDay();
     const currentTotalM = now.getHours() * 60 + now.getMinutes();
 
-    let maxDay = 5;
-    if (schedule["6"] && schedule["6"].length > 0) maxDay = 6;
+    const satTabItem = document.getElementById('satTabItem');
+    const hasSat = (schedule["6"] && schedule["6"].length > 0);
+    if (satTabItem) satTabItem.style.display = hasSat ? 'list-item' : 'none';
+
+    let maxDay = hasSat ? 6 : 5;
+    if (selectedDay === 6 && !hasSat) {
+      selectedDay = 1;
+      updateDayTabsUI();
+    }
 
     for (let day = 1; day <= maxDay; day++) {
       const dayColumn = document.createElement('div');
@@ -864,6 +903,17 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
           }
 
+          let meetBtnHTML = '';
+          const cleanLink = (cls.link || '').trim();
+          if (cleanLink && cleanLink !== '#' && cleanLink !== 'about:blank') {
+            meetBtnHTML = `
+              <a href="${cleanLink}" target="_blank" rel="noopener noreferrer" class="meet-btn">
+                <i class="ph ph-video-camera"></i>
+                Перейти
+              </a>
+            `;
+          }
+
           card.innerHTML = `
             <div class="class-header">
               <div class="class-time">
@@ -878,10 +928,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="class-subject">${cls.subject}</div>
             <div class="class-footer">
               ${locationHTML}
-              <a href="${link}" target="_blank" rel="noopener noreferrer" class="meet-btn">
-                <i class="ph ph-video-camera"></i>
-                Перейти
-              </a>
+              ${meetBtnHTML}
             </div>
           `;
           classesDiv.appendChild(card);
@@ -928,6 +975,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --- Notifications ---
+  const notifiedClasses = new Set();
+
   function checkNotificationStatus() {
     if (!("Notification" in window)) {
       notifyToggleBtns.forEach(b => b.style.display = 'none');
@@ -956,35 +1005,46 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function setupAlarms() {
-    if (Notification.permission !== "granted") return;
+    if (!("Notification" in window) || Notification.permission !== "granted") return;
+
+    // Check every 30 seconds for upcoming classes, avoiding background tab throttling
     setInterval(() => {
       const now = new Date();
       let dayOfWeek = now.getDay();
       if (dayOfWeek === 0) return;
 
+      // Calculate actual calendar week (not preview UI toggle state)
+      const diffTime = now.getTime() - START_DATE.getTime();
+      const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+      const actualWeekNumber = Math.floor(diffDays / 7);
+      const actualWeekType = (actualWeekNumber % 2 === 0) ? 'numerator' : 'denominator';
+
       const db = getDB();
-      const schedule = currentWeekType === 'numerator' ? db.num : db.den;
+      const schedule = (actualWeekType === 'numerator') ? db.num : db.den;
       const dayData = schedule[dayOfWeek] || [];
 
       dayData.forEach(cls => {
         const timeStr = PAIR_TIMES[cls.pair];
         if (!timeStr) return;
-        
+
         const [startStr] = timeStr.split('-');
         const [startH, startM] = startStr.split(':').map(Number);
 
-        let targetTime = new Date();
+        const targetTime = new Date(now.getTime());
         targetTime.setHours(startH, startM, 0, 0);
-        targetTime.setMinutes(targetTime.getMinutes() - 10);
 
-        if (now.getHours() === targetTime.getHours() && now.getMinutes() === targetTime.getMinutes() && now.getSeconds() === 0) {
+        const diffMinutes = Math.round((targetTime.getTime() - now.getTime()) / 60000);
+        const notificationKey = `${now.toDateString()}_${actualWeekType}_${dayOfWeek}_${cls.pair}_${cls.subject}`;
+
+        if (diffMinutes >= 0 && diffMinutes <= 10 && !notifiedClasses.has(notificationKey)) {
+          notifiedClasses.add(notificationKey);
           new Notification("Скоро пара!", {
-            body: `${cls.subject} почнеться за 10 хвилин.`,
+            body: `${cls.subject} почнеться ${diffMinutes > 0 ? 'через ' + diffMinutes + ' хв' : 'зараз'}.`,
             icon: "assets/schedule-plus.svg"
           });
         }
       });
-    }, 1000);
+    }, 30000);
   }
 
   function registerServiceWorker() {

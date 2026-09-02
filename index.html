@@ -20,7 +20,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
-  <link rel="stylesheet" href="style.css?v=0.3">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
@@ -68,6 +68,7 @@
           <li><button class="day-tab" data-day="3">Ср</button></li>
           <li><button class="day-tab" data-day="4">Чт</button></li>
           <li><button class="day-tab" data-day="5">Пт</button></li>
+          <li id="satTabItem" style="display: none;"><button class="day-tab" data-day="6">Сб</button></li>
         </ul>
       </nav>
     </header>
@@ -112,7 +113,7 @@
   
     <!-- Profile / Schedules Modal -->
     <div class="modal-backdrop" id="profileModalBackdrop">
-      <div class="group-modal" id="profileModal" style="max-width: 480px; width: 95%; max-height: 88vh; display: flex; flex-direction: column;">
+      <div class="group-modal" id="profileModal" style="max-width: 480px; width: 95%; display: flex; flex-direction: column;">
         <div class="group-modal-header">
           <div class="modal-title-wrapper">
             <i class="ph ph-graduation-cap"></i>

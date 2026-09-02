@@ -851,6 +851,14 @@ body {
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
   }
 
+  #profileModal {
+    max-height: 94vh;
+  }
+
+  #profileModal .profile-modal-content {
+    padding-bottom: 50px;
+  }
+
   .modal-backdrop.open .group-modal {
     transform: scale(1) translateY(0);
   }
@@ -1171,6 +1179,16 @@ body {
 .custom-select-container.open .custom-select-options {
   opacity: 1;
   visibility: visible;
+  transform: translateY(0) scale(1);
+}
+
+.custom-select-container.drop-up .custom-select-options {
+  top: auto;
+  bottom: calc(100% + 6px);
+  transform: translateY(6px) scale(0.98);
+}
+
+.custom-select-container.drop-up.open .custom-select-options {
   transform: translateY(0) scale(1);
 }
 

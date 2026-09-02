@@ -1,4 +1,4 @@
-const CACHE_NAME = 'schedule-plus-v0.6';
+const CACHE_NAME = 'schedule-plus-v0.7';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -46,7 +46,7 @@ self.addEventListener('fetch', (event) => {
   // Stale-While-Revalidate
   event.respondWith(
     caches.open(CACHE_NAME).then(async (cache) => {
-      const cachedResponse = await cache.match(event.request);
+      const cachedResponse = await cache.match(event.request, { ignoreSearch: true });
 
       const fetchPromise = fetch(event.request)
         .then((networkResponse) => {
