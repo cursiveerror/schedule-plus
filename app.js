@@ -127,6 +127,21 @@ document.addEventListener('DOMContentLoaded', () => {
       profiles = [defaultProfile];
       setProfiles(profiles);
       setActiveProfileId(defaultProfile.id);
+
+      fetch('assets/schedule.json?v=' + Date.now())
+        .then(res => res.json())
+        .then(data => {
+          const tpl = data.templates && data.templates['КІБ-25011б'];
+          if (tpl) {
+            defaultProfile.numerator = JSON.parse(JSON.stringify(tpl.numerator));
+            defaultProfile.denominator = JSON.parse(JSON.stringify(tpl.denominator));
+            setProfiles([defaultProfile]);
+            setDB(defaultProfile.numerator, defaultProfile.denominator);
+            renderSchedule();
+            updateProfileUI();
+          }
+        })
+        .catch(err => console.warn('Could not auto-load initial template:', err));
     } else {
       // Deduplicate profiles by name if duplicates were created during testing
       const uniqueProfiles = [];
@@ -142,31 +157,6 @@ document.addEventListener('DOMContentLoaded', () => {
         setProfiles(profiles);
       }
     }
-
-    // Always fetch schedule.json to keep template for КІБ-25011б in sync with local file
-    fetch('assets/schedule.json?v=' + Date.now())
-      .then(res => res.json())
-      .then(data => {
-        if (!data || !data.templates) return;
-        const kibTpl = data.templates['КІБ-25011б'];
-        if (!kibTpl) return;
-
-        let currentProfiles = getProfiles();
-        const kibIdx = currentProfiles.findIndex(p => p.name === 'КІБ-25011б');
-
-        if (kibIdx !== -1) {
-          currentProfiles[kibIdx].numerator = JSON.parse(JSON.stringify(kibTpl.numerator));
-          currentProfiles[kibIdx].denominator = JSON.parse(JSON.stringify(kibTpl.denominator));
-          setProfiles(currentProfiles);
-
-          if (getActiveProfileId() === currentProfiles[kibIdx].id) {
-            setDB(kibTpl.numerator, kibTpl.denominator);
-            renderSchedule();
-            updateProfileUI();
-          }
-        }
-      })
-      .catch(err => console.warn('Could not sync template from schedule.json:', err));
 
     init();
   }
@@ -665,7 +655,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function openEditorModal() {
     editorWeekType = currentWeekType;
-    editorSelectedDay = selectedDay > 5 ? 1 : selectedDay; // Default to Mon if Sunday
+    editorSelectedDay = (selectedDay === 0 || selectedDay > 6) ? 1 : selectedDay;
     
     document.getElementById('editorWeekToggle').setAttribute('data-week', editorWeekType);
     document.getElementById('editor-num-week').checked = (editorWeekType === 'numerator');
@@ -770,6 +760,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const db = getDB();
     const schedule = editorWeekType === 'numerator' ? db.num : db.den;
     
+    if (!schedule[editorSelectedDay]) {
+      schedule[editorSelectedDay] = [];
+    }
+
     // Check if pair already exists (and it's not the one we are editing)
     const existing = schedule[editorSelectedDay].find(c => c.pair === pair);
     if (existing && existing.id !== id) {
@@ -783,7 +777,6 @@ document.addEventListener('DOMContentLoaded', () => {
         schedule[editorSelectedDay][idx] = { id, pair, subject, location, link, type };
       }
     } else {
-      if(!schedule[editorSelectedDay]) schedule[editorSelectedDay] = [];
       schedule[editorSelectedDay].push({
         id: Date.now().toString(),
         pair, subject, location, link, type
@@ -793,6 +786,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setDB(db.num, db.den);
     document.getElementById('editClassModalBackdrop').classList.remove('open');
     renderEditorClasses();
+    renderSchedule();
   }
 
   function deleteClass() {
@@ -801,11 +795,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const db = getDB();
     const schedule = editorWeekType === 'numerator' ? db.num : db.den;
     
-    schedule[editorSelectedDay] = schedule[editorSelectedDay].filter(c => c.id !== id);
+    if (schedule[editorSelectedDay]) {
+      schedule[editorSelectedDay] = schedule[editorSelectedDay].filter(c => c.id !== id);
+    }
     
     setDB(db.num, db.den);
     document.getElementById('editClassModalBackdrop').classList.remove('open');
     renderEditorClasses();
+    renderSchedule();
   }
 
   function renderSchedule() {
