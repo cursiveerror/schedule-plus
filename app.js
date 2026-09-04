@@ -494,7 +494,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     // --- Push Notifications Logic ---
     if (notifyToggleBtns.length > 0) {
-      const handlePushSubscribe = async () => {
+      const handlePushSubscribe = async (e) => {
+        if (e) e.preventDefault();
+        
         const PUBLIC_VAPID_KEY = 'BO6yfOA8xe7qHUIPCh7LeMXNSH-D6Cc_2i_sgN4SJV3nLQDsplIN1LJB7iPWuEmje1hPoX4BE08a_CVAGgqYCeM';
         const SERVER_URL = 'https://schedule-plus.pp.ua'; // Ваш новий домен
 
