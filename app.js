@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const themeToggleBtns = document.querySelectorAll('.theme-toggle-btn');
   const notifyToggleBtns = document.querySelectorAll('.notify-toggle-btn');
   const metaThemeColor = document.getElementById('meta-theme-color');
-  
+
   // Profile Elements
   const desktopProfileBtn = document.getElementById('desktopProfileBtn');
   const mobileProfileBtn = document.getElementById('mobileProfileBtn');
@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function getProfiles() {
     try {
       return JSON.parse(localStorage.getItem('schedule_profiles')) || [];
-    } catch(e) {
+    } catch (e) {
       return [];
     }
   }
@@ -337,7 +337,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const db = getDB();
     const hasSaturdayClasses = (db.num && db.num["6"] && db.num["6"].length > 0) ||
-                               (db.den && db.den["6"] && db.den["6"].length > 0);
+      (db.den && db.den["6"] && db.den["6"].length > 0);
 
     if (dayOfWeek === 0) {
       dateForCalc.setDate(dateForCalc.getDate() + 1);
@@ -441,7 +441,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const profileModalBackdrop = document.getElementById('profileModalBackdrop');
     if (desktopProfileBtn) desktopProfileBtn.addEventListener('click', openProfileModal);
     if (mobileProfileBtn) mobileProfileBtn.addEventListener('click', openProfileModal);
-    
+
     document.getElementById('closeProfileModal').addEventListener('click', () => {
       profileModalBackdrop.classList.remove('open');
     });
@@ -492,13 +492,78 @@ document.addEventListener('DOMContentLoaded', () => {
         renderSchedule();
       }
     });
+    // --- Push Notifications Logic ---
+    const enablePushBtn = document.getElementById('enablePushBtn');
+    if (enablePushBtn) {
+      enablePushBtn.addEventListener('click', async () => {
+        // УВАГА: ЗАМІНІТЬ ЦЕ НА ВАШ PUBLIC KEY
+        const PUBLIC_VAPID_KEY = 'BO6yfOA8xe7qHUIPCh7LeMXNSH-D6Cc_2i_sgN4SJV3nLQDsplIN1LJB7iPWuEmje1hPoX4BE08a_CVAGgqYCeM';
+        const SERVER_URL = 'http://158.178.148.193:3000'; // IP вашого сервера Oracle
+
+        if (PUBLIC_VAPID_KEY === 'BO6yfOA8xe7qHUIPCh7LeMXNSH-D6Cc_2i_sgN4SJV3nLQDsplIN1LJB7iPWuEmje1hPoX4BE08a_CVAGgqYCeM') {
+          alert('Спочатку додайте ваш Public VAPID Key у файл app.js (рядок ~500)!');
+          return;
+        }
+
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+          alert('Push-сповіщення не підтримуються вашим браузером.');
+          return;
+        }
+
+        try {
+          const permission = await Notification.requestPermission();
+          if (permission !== 'granted') {
+            alert('Ви відхилили дозвіл на сповіщення.');
+            return;
+          }
+
+          const registration = await navigator.serviceWorker.ready;
+          let subscription = await registration.pushManager.getSubscription();
+
+          if (!subscription) {
+            function urlBase64ToUint8Array(base64String) {
+              const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+              const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+              const rawData = window.atob(base64);
+              const outputArray = new Uint8Array(rawData.length);
+              for (let i = 0; i < rawData.length; ++i) {
+                outputArray[i] = rawData.charCodeAt(i);
+              }
+              return outputArray;
+            }
+
+            subscription = await registration.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: urlBase64ToUint8Array(PUBLIC_VAPID_KEY)
+            });
+          }
+
+          const response = await fetch(`${SERVER_URL}/api/subscribe`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(subscription)
+          });
+
+          if (response.ok) {
+            alert('Сповіщення успішно увімкнено!');
+          } else {
+            alert('Помилка сервера при збереженні підписки.');
+          }
+
+        } catch (err) {
+          console.error('Push error:', err);
+          alert('Помилка при налаштуванні сповіщень: ' + err.message);
+        }
+      });
+    }
+    // --- End Push Notifications Logic ---
 
     const exportScheduleBtn = document.getElementById('exportScheduleBtn');
     if (exportScheduleBtn) {
       exportScheduleBtn.addEventListener('click', () => {
         const profile = getActiveProfile();
         if (!profile) return;
-        
+
         const data = {
           numerator: profile.numerator,
           denominator: profile.denominator
@@ -506,7 +571,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const jsonStr = JSON.stringify(data, null, 2);
         const blob = new Blob([jsonStr], { type: 'application/json' });
         const fileName = `schedule_${profile.name.replace(/[^a-z0-9а-яіїєґ]/gi, '_')}.json`;
-        
+
         function fallbackDownload(b, fName) {
           const url = URL.createObjectURL(b);
           const a = document.createElement('a');
@@ -519,7 +584,7 @@ document.addEventListener('DOMContentLoaded', () => {
             URL.revokeObjectURL(url);
           }, 100);
         }
-        
+
         if (navigator.canShare) {
           const file = new File([blob], fileName, { type: 'application/json' });
           if (navigator.canShare({ files: [file] })) {
@@ -542,16 +607,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const importScheduleBtn = document.getElementById('importScheduleBtn');
     const importScheduleInput = document.getElementById('importScheduleInput');
-    
+
     if (importScheduleBtn && importScheduleInput) {
       importScheduleBtn.addEventListener('click', () => {
         importScheduleInput.click();
       });
-      
+
       importScheduleInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (!file) return;
-        
+
         const reader = new FileReader();
         reader.onload = (event) => {
           try {
@@ -561,7 +626,7 @@ document.addEventListener('DOMContentLoaded', () => {
               if (profile) {
                 if (confirm(`Імпортувати розклад у поточний профіль "${profile.name}"? Усі існуючі пари будуть перезаписані.`)) {
                   setDB(data.numerator, data.denominator);
-                  
+
                   const profiles = getProfiles();
                   const idx = profiles.findIndex(p => p.id === profile.id);
                   if (idx !== -1) {
@@ -600,44 +665,44 @@ document.addEventListener('DOMContentLoaded', () => {
         fetch('assets/schedule.json?v=' + Date.now())
           .then(res => res.json())
           .then(data => {
-             const tpl = data.templates && data.templates[tplName];
-             if (tpl) {
-               const profiles = getProfiles();
-               const existingIdx = profiles.findIndex(p => p.name === tplName);
+            const tpl = data.templates && data.templates[tplName];
+            if (tpl) {
+              const profiles = getProfiles();
+              const existingIdx = profiles.findIndex(p => p.name === tplName);
 
-               if (existingIdx !== -1) {
-                 profiles[existingIdx].numerator = JSON.parse(JSON.stringify(tpl.numerator));
-                 profiles[existingIdx].denominator = JSON.parse(JSON.stringify(tpl.denominator));
-                 setProfiles(profiles);
-                 setActiveProfileId(profiles[existingIdx].id);
-                 setDB(tpl.numerator, tpl.denominator);
-                 updateProfileUI();
-                 renderSchedule();
-                 setCustomSelectValue('templateSelectWrapper', 'templateSelect', '');
-                 alert(`Розклад "${tplName}" успішно оновлено з файлу!`);
-               } else {
-                 const newProfile = {
-                   id: 'prof_' + Date.now(),
-                   name: tplName,
-                   numerator: JSON.parse(JSON.stringify(tpl.numerator)),
-                   denominator: JSON.parse(JSON.stringify(tpl.denominator))
-                 };
-                 profiles.push(newProfile);
-                 setProfiles(profiles);
-                 setActiveProfileId(newProfile.id);
-                 setDB(tpl.numerator, tpl.denominator);
-                 updateProfileUI();
-                 renderSchedule();
-                 setCustomSelectValue('templateSelectWrapper', 'templateSelect', '');
-                 alert(`Розклад "${tplName}" успішно додано до ваших розкладів!`);
-               }
-             } else {
-               alert('Шаблон не знайдено.');
-             }
+              if (existingIdx !== -1) {
+                profiles[existingIdx].numerator = JSON.parse(JSON.stringify(tpl.numerator));
+                profiles[existingIdx].denominator = JSON.parse(JSON.stringify(tpl.denominator));
+                setProfiles(profiles);
+                setActiveProfileId(profiles[existingIdx].id);
+                setDB(tpl.numerator, tpl.denominator);
+                updateProfileUI();
+                renderSchedule();
+                setCustomSelectValue('templateSelectWrapper', 'templateSelect', '');
+                alert(`Розклад "${tplName}" успішно оновлено з файлу!`);
+              } else {
+                const newProfile = {
+                  id: 'prof_' + Date.now(),
+                  name: tplName,
+                  numerator: JSON.parse(JSON.stringify(tpl.numerator)),
+                  denominator: JSON.parse(JSON.stringify(tpl.denominator))
+                };
+                profiles.push(newProfile);
+                setProfiles(profiles);
+                setActiveProfileId(newProfile.id);
+                setDB(tpl.numerator, tpl.denominator);
+                updateProfileUI();
+                renderSchedule();
+                setCustomSelectValue('templateSelectWrapper', 'templateSelect', '');
+                alert(`Розклад "${tplName}" успішно додано до ваших розкладів!`);
+              }
+            } else {
+              alert('Шаблон не знайдено.');
+            }
           })
           .catch(err => {
-             console.error(err);
-             alert('Помилка завантаження шаблону.');
+            console.error(err);
+            alert('Помилка завантаження шаблону.');
           });
       });
     }
@@ -648,7 +713,7 @@ document.addEventListener('DOMContentLoaded', () => {
       profileModalBackdrop.classList.remove('open');
       openEditorModal();
     });
-    
+
     document.getElementById('closeEditorModal').addEventListener('click', () => {
       editorModalBackdrop.classList.remove('open');
       renderSchedule(); // Render changes when exiting editor
@@ -686,7 +751,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Add Class Button
     document.getElementById('addClassBtn').addEventListener('click', () => {
-       openEditClassModal(null);
+      openEditClassModal(null);
     });
 
     // Edit Class Modal
@@ -735,13 +800,13 @@ document.addEventListener('DOMContentLoaded', () => {
   function openEditorModal() {
     editorWeekType = currentWeekType;
     editorSelectedDay = (selectedDay === 0 || selectedDay > 6) ? 1 : selectedDay;
-    
+
     document.getElementById('editorWeekToggle').setAttribute('data-week', editorWeekType);
     document.getElementById('editor-num-week').checked = (editorWeekType === 'numerator');
     document.getElementById('editor-den-week').checked = (editorWeekType === 'denominator');
-    
+
     document.querySelectorAll('#editorDaysNav .course-chip').forEach(btn => {
-      if(parseInt(btn.dataset.editday) === editorSelectedDay) btn.classList.add('active');
+      if (parseInt(btn.dataset.editday) === editorSelectedDay) btn.classList.add('active');
       else btn.classList.remove('active');
     });
 
@@ -752,7 +817,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderEditorClasses() {
     const container = document.getElementById('editorClassesContainer');
     container.innerHTML = '';
-    
+
     const db = getDB();
     const schedule = editorWeekType === 'numerator' ? db.num : db.den;
     const dayClasses = schedule[editorSelectedDay] || [];
@@ -798,7 +863,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function openEditClassModal(cls = null) {
     const title = document.getElementById('editClassTitle');
     const btnDel = document.getElementById('deleteClassBtn');
-    
+
     if (cls) {
       title.textContent = 'Редагування пари';
       btnDel.style.display = 'block';
@@ -838,7 +903,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const db = getDB();
     const schedule = editorWeekType === 'numerator' ? db.num : db.den;
-    
+
     if (!schedule[editorSelectedDay]) {
       schedule[editorSelectedDay] = [];
     }
@@ -846,8 +911,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Check if pair already exists (and it's not the one we are editing)
     const existing = schedule[editorSelectedDay].find(c => c.pair === pair);
     if (existing && existing.id !== id) {
-       alert(`Пара ${pair} вже існує у цьому дні! Видаліть або змініть її спочатку.`);
-       return;
+      alert(`Пара ${pair} вже існує у цьому дні! Видаліть або змініть її спочатку.`);
+      return;
     }
 
     if (id) {
@@ -869,15 +934,15 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function deleteClass() {
-    if(!confirm("Видалити цю пару?")) return;
+    if (!confirm("Видалити цю пару?")) return;
     const id = document.getElementById('editClassId').value;
     const db = getDB();
     const schedule = editorWeekType === 'numerator' ? db.num : db.den;
-    
+
     if (schedule[editorSelectedDay]) {
       schedule[editorSelectedDay] = schedule[editorSelectedDay].filter(c => c.id !== id);
     }
-    
+
     setDB(db.num, db.den);
     document.getElementById('editClassModalBackdrop').classList.remove('open');
     renderEditorClasses();
@@ -922,7 +987,7 @@ document.addEventListener('DOMContentLoaded', () => {
       classesDiv.className = 'day-column-classes';
 
       const filteredSchedule = schedule[day] || [];
-      filteredSchedule.sort((a,b) => a.pair - b.pair);
+      filteredSchedule.sort((a, b) => a.pair - b.pair);
 
       if (filteredSchedule.length === 0) {
         classesDiv.innerHTML = `
@@ -936,7 +1001,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const timeStr = PAIR_TIMES[cls.pair] || '';
           const [startStr, endStr] = timeStr.split('-');
           const link = cls.link || '#';
-          
+
           let typeLabel = cls.type;
           const typeClass = typeLabel === 'Лекція' ? 'lecture' : 'practice';
 

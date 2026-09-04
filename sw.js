@@ -1,4 +1,4 @@
-const CACHE_NAME = 'schedule-plus-v0.9';
+const CACHE_NAME = 'schedule-plus-v1.0';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -61,6 +61,47 @@ self.addEventListener('fetch', (event) => {
 
       // Return cached response immediately if available, otherwise wait for network
       return cachedResponse || fetchPromise;
+    })
+  );
+});
+
+// Push Notification Event
+self.addEventListener('push', (event) => {
+  let data = { title: 'Розклад+', body: 'Наближається пара!' };
+  if (event.data) {
+    try {
+      data = event.data.json();
+    } catch (e) {
+      console.error('Push payload parse error', e);
+    }
+  }
+
+  const options = {
+    body: data.body,
+    icon: './assets/schedule-plus.svg',
+    badge: './assets/schedule-plus.svg',
+    vibrate: [200, 100, 200],
+    data: { url: './' }
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(data.title, options)
+  );
+});
+
+// Notification Click Event
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if (client.url.includes('/') && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow('./');
+      }
     })
   );
 });
