@@ -493,17 +493,10 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
     // --- Push Notifications Logic ---
-    const enablePushBtn = document.getElementById('enablePushBtn');
-    if (enablePushBtn) {
-      enablePushBtn.addEventListener('click', async () => {
-        // УВАГА: ЗАМІНІТЬ ЦЕ НА ВАШ PUBLIC KEY
+    if (notifyToggleBtns.length > 0) {
+      const handlePushSubscribe = async () => {
         const PUBLIC_VAPID_KEY = 'BO6yfOA8xe7qHUIPCh7LeMXNSH-D6Cc_2i_sgN4SJV3nLQDsplIN1LJB7iPWuEmje1hPoX4BE08a_CVAGgqYCeM';
         const SERVER_URL = 'https://schedule-plus.pp.ua'; // Ваш новий домен
-
-        if (PUBLIC_VAPID_KEY === 'BO6yfOA8xe7qHUIPCh7LeMXNSH-D6Cc_2i_sgN4SJV3nLQDsplIN1LJB7iPWuEmje1hPoX4BE08a_CVAGgqYCeM') {
-          alert('Спочатку додайте ваш Public VAPID Key у файл app.js (рядок ~500)!');
-          return;
-        }
 
         if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
           alert('Push-сповіщення не підтримуються вашим браузером.');
@@ -554,6 +547,10 @@ document.addEventListener('DOMContentLoaded', () => {
           console.error('Push error:', err);
           alert('Помилка при налаштуванні сповіщень: ' + err.message);
         }
+      };
+
+      notifyToggleBtns.forEach(btn => {
+        btn.addEventListener('click', handlePushSubscribe);
       });
     }
     // --- End Push Notifications Logic ---
