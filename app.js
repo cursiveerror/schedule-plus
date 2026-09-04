@@ -153,6 +153,33 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     return { num: createEmptySchedule(), den: createEmptySchedule() };
   }
+  const PUBLIC_VAPID_KEY = 'BO6yfOA8xe7qHUIPCh7LeMXNSH-D6Cc_2i_sgN4SJV3nLQDsplIN1LJB7iPWuEmje1hPoX4BE08a_CVAGgqYCeM';
+  const SERVER_URL = 'https://schedule-plus.pp.ua'; // Ваш новий домен
+
+  async function syncScheduleWithServer(subscription) {
+    const profile = getActiveProfile();
+    if (!profile) return false;
+    
+    const payload = {
+      subscription: subscription,
+      schedule: {
+        numerator: profile.numerator,
+        denominator: profile.denominator
+      }
+    };
+
+    try {
+      const response = await fetch(`${SERVER_URL}/api/subscribe`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      return response.ok;
+    } catch (e) {
+      console.error('Error syncing schedule:', e);
+      return false;
+    }
+  }
 
   function setDB(num, den) {
     const profile = getActiveProfile();
@@ -160,6 +187,16 @@ document.addEventListener('DOMContentLoaded', () => {
       profile.numerator = num;
       profile.denominator = den;
       saveActiveProfile(profile);
+
+      // Auto-sync schedule to server if user is subscribed to pushes
+      if ('serviceWorker' in navigator && 'PushManager' in window) {
+        navigator.serviceWorker.ready.then(async (registration) => {
+          const subscription = await registration.pushManager.getSubscription();
+          if (subscription) {
+            syncScheduleWithServer(subscription);
+          }
+        });
+      }
     }
     // Also save separate numerator and denominator keys for full compatibility
     localStorage.setItem('custom_schedule_numerator', JSON.stringify(num));
@@ -496,9 +533,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (notifyToggleBtns.length > 0) {
       const handlePushSubscribe = async (e) => {
         if (e) e.preventDefault();
-        
-        const PUBLIC_VAPID_KEY = 'BO6yfOA8xe7qHUIPCh7LeMXNSH-D6Cc_2i_sgN4SJV3nLQDsplIN1LJB7iPWuEmje1hPoX4BE08a_CVAGgqYCeM';
-        const SERVER_URL = 'https://schedule-plus.pp.ua'; // Ваш новий домен
 
         if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
           alert('Push-сповіщення не підтримуються вашим браузером.');
@@ -533,16 +567,12 @@ document.addEventListener('DOMContentLoaded', () => {
             });
           }
 
-          const response = await fetch(`${SERVER_URL}/api/subscribe`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(subscription)
-          });
+          const success = await syncScheduleWithServer(subscription);
 
-          if (response.ok) {
+          if (success) {
             alert('Сповіщення успішно увімкнено!');
           } else {
-            alert('Помилка сервера при збереженні підписки.');
+            alert('Помилка сервера при збереженні підписки та розкладу.');
           }
 
         } catch (err) {
