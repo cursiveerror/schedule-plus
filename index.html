@@ -202,6 +202,26 @@
             </div>
           </div>
 
+          <!-- Section: Import / Export -->
+          <div class="profile-section">
+            <div class="profile-section-header">
+              <span class="profile-section-title">Експорт та Імпорт розкладу</span>
+            </div>
+            
+            <div class="import-export-actions" style="display: flex; gap: 10px; margin-top: 10px;">
+              <button id="exportScheduleBtn" class="add-empty-btn" style="flex: 1;">
+                <i class="ph ph-share-network"></i>
+                <span>Експортувати</span>
+              </button>
+              
+              <button id="importScheduleBtn" class="add-empty-btn" style="flex: 1;">
+                <i class="ph ph-upload-simple"></i>
+                <span>Імпортувати</span>
+              </button>
+              <input type="file" id="importScheduleInput" accept=".json" style="display: none;">
+            </div>
+          </div>
+
           <!-- Section 4: Clear active schedule -->
           <div class="profile-danger-actions">
             <button id="resetScheduleBtn" class="clear-classes-link-btn">
@@ -226,8 +246,8 @@
             <i class="ph ph-x"></i>
           </button>
         </div>
-        <div class="group-modal-body" style="padding-top: 10px; flex: 1; overflow-y: auto;">
-          <div class="segmented-control" id="editorWeekToggle" data-week="numerator" style="margin-bottom: 20px;">
+        <div class="editor-modal-controls">
+          <div class="segmented-control" id="editorWeekToggle" data-week="numerator">
             <input type="radio" name="editor-week-type" id="editor-num-week" value="numerator" checked>
             <input type="radio" name="editor-week-type" id="editor-den-week" value="denominator">
             <label for="editor-num-week" id="editor-num-label">Чисельник</label>
@@ -235,7 +255,7 @@
             <div class="segmented-control-indicator"></div>
           </div>
           
-          <div style="display:flex; gap:12px; overflow-x: auto; padding-bottom: 12px; margin-bottom: 16px; scrollbar-width: none;" id="editorDaysNav">
+          <div id="editorDaysNav">
              <button class="course-chip active" data-editday="1">ПН</button>
              <button class="course-chip" data-editday="2">ВТ</button>
              <button class="course-chip" data-editday="3">СР</button>
@@ -243,14 +263,16 @@
              <button class="course-chip" data-editday="5">ПТ</button>
              <button class="course-chip" data-editday="6">СБ</button>
           </div>
-          
-          <div id="editorClassesContainer" style="display: flex; flex-direction: column; gap: 12px;">
+        </div>
+
+        <div class="group-modal-body editor-classes-body">
+          <div id="editorClassesContainer">
              <!-- Classes will be listed here by JS -->
           </div>
           
-          <button id="addClassBtn" style="margin-top: 16px; width: 100%; background: var(--color-pebble); color: var(--color-carbon); border: 2px dashed var(--color-mist); padding: 16px; border-radius: 16px; font-size: 15px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s ease;">
+          <button id="addClassBtn" class="add-class-dashed-btn">
             <i class="ph ph-plus"></i>
-            Додати пару
+            <span>Додати пару</span>
           </button>
         </div>
       </div>

@@ -804,7 +804,7 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.4);
+  background-color: rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   z-index: 999;
@@ -813,12 +813,14 @@ body {
   justify-content: center;
   opacity: 0;
   visibility: hidden;
+  pointer-events: none;
   transition: opacity 0.25s ease, visibility 0.25s ease;
 }
 
 .modal-backdrop.open {
   opacity: 1;
   visibility: visible;
+  pointer-events: auto;
 }
 
 .group-modal {
@@ -827,16 +829,22 @@ body {
   max-width: 520px;
   border-radius: 28px 28px 0 0;
   box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.2);
-  transform: translateY(100%);
+  transform: translateY(100%) translateZ(0);
+  -webkit-transform: translateY(100%) translateZ(0);
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   max-height: 85vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 .modal-backdrop.open .group-modal {
-  transform: translateY(0);
+  transform: translateY(0) translateZ(0);
+  -webkit-transform: translateY(0) translateZ(0);
 }
 
 @media (min-width: 600px) {
@@ -847,8 +855,10 @@ body {
 
   .group-modal {
     border-radius: 24px;
-    transform: scale(0.95) translateY(20px);
+    transform: scale(0.95) translateY(20px) translateZ(0);
+    -webkit-transform: scale(0.95) translateY(20px) translateZ(0);
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+    padding-bottom: 0;
   }
 
   #profileModal {
@@ -856,11 +866,12 @@ body {
   }
 
   #profileModal .profile-modal-content {
-    padding-bottom: 50px;
+    padding-bottom: 30px;
   }
 
   .modal-backdrop.open .group-modal {
-    transform: scale(1) translateY(0);
+    transform: scale(1) translateY(0) translateZ(0);
+    -webkit-transform: scale(1) translateY(0) translateZ(0);
   }
 }
 
@@ -911,7 +922,7 @@ body {
 }
 
 .group-modal-body {
-  padding: 20px 24px;
+  padding: 16px 20px 24px;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -919,6 +930,9 @@ body {
   overflow-x: hidden;
   scrollbar-width: none;
   -ms-overflow-style: none;
+  min-height: 0;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .group-modal-body::-webkit-scrollbar {
@@ -1114,6 +1128,7 @@ body {
   align-items: center;
   justify-content: space-between;
   width: 100%;
+  min-width: 0;
   padding: 10px 14px;
   border-radius: 12px;
   border: 1px solid var(--color-mist);
@@ -1136,6 +1151,8 @@ body {
 }
 
 .custom-select-text {
+  flex: 1;
+  min-width: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1230,8 +1247,12 @@ body {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding: 16px 20px 20px;
+  padding: 16px 20px 24px;
   overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .profile-section {
@@ -1276,16 +1297,21 @@ body {
   flex-direction: column;
   gap: 12px;
   box-shadow: 0 4px 16px var(--color-accent-glow);
+  box-sizing: border-box;
+  width: 100%;
 }
 
 .active-schedule-name-row {
   display: flex;
   align-items: center;
   gap: 10px;
+  width: 100%;
 }
 
 .active-schedule-name-row input {
   flex: 1;
+  min-width: 0;
+  width: 0;
   background: var(--color-surface);
   border: 1px solid var(--color-mist);
   border-radius: 10px;
@@ -1295,6 +1321,7 @@ body {
   font-weight: 600;
   outline: none;
   transition: border-color 0.2s;
+  box-sizing: border-box;
 }
 
 .active-schedule-name-row input:focus {
@@ -1311,6 +1338,7 @@ body {
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
+  flex-shrink: 0;
   transition: opacity 0.2s;
 }
 
@@ -1450,6 +1478,8 @@ body {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  box-sizing: border-box;
+  width: 100%;
 }
 
 .add-empty-btn {
@@ -1478,6 +1508,13 @@ body {
   display: flex;
   gap: 8px;
   align-items: center;
+  width: 100%;
+}
+
+.add-schedule-row .custom-select-container {
+  flex: 1;
+  min-width: 0;
+  width: auto;
 }
 
 .template-add-btn {
@@ -1494,6 +1531,7 @@ body {
   align-items: center;
   gap: 6px;
   white-space: nowrap;
+  flex-shrink: 0;
   transition: opacity 0.2s;
 }
 
@@ -1525,6 +1563,123 @@ body {
 .clear-classes-link-btn:hover {
   opacity: 1;
   text-decoration: underline;
+}
+
+/* ==========================================================================
+   Editor Modal Dedicated Controls & Styling
+   ========================================================================== */
+.editor-modal-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 20px 12px;
+  background-color: var(--color-surface);
+  border-bottom: 1px solid var(--color-mist);
+  flex-shrink: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+#editorModal #editorWeekToggle {
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+
+#editorDaysNav {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 2px 0 4px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  flex-shrink: 0;
+  width: 100%;
+}
+
+#editorDaysNav::-webkit-scrollbar {
+  display: none;
+}
+
+#editorDaysNav .course-chip {
+  flex: 1;
+  min-width: 44px;
+  height: 38px;
+  padding: 0 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  flex-shrink: 0;
+  border: 1px solid var(--color-mist);
+  background-color: var(--color-pebble);
+  color: var(--color-ash);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+#editorDaysNav .course-chip:hover {
+  border-color: var(--color-accent);
+  color: var(--color-carbon);
+}
+
+#editorDaysNav .course-chip.active {
+  background-color: var(--color-accent);
+  color: #ffffff;
+  border-color: var(--color-accent);
+  box-shadow: 0 2px 8px var(--color-accent-glow);
+}
+
+.editor-classes-body {
+  padding-top: 14px;
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+#editorClassesContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex-shrink: 0;
+  width: 100%;
+}
+
+#editorClassesContainer .class-card {
+  flex-shrink: 0;
+}
+
+.add-class-dashed-btn {
+  margin-top: 8px;
+  margin-bottom: 8px;
+  width: 100%;
+  background: var(--color-pebble);
+  color: var(--color-carbon);
+  border: 2px dashed var(--color-mist);
+  padding: 14px;
+  border-radius: 16px;
+  font-size: 14.5px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.add-class-dashed-btn:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  background-color: var(--color-accent-light);
+}
+
+.add-class-dashed-btn:active {
+  transform: scale(0.99);
 }
 
 

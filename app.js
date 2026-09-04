@@ -120,28 +120,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (profiles.length === 0) {
       const defaultProfile = {
         id: 'prof_' + Date.now(),
-        name: 'КІБ-25011б',
+        name: 'Мій розклад',
         numerator: createEmptySchedule(),
         denominator: createEmptySchedule()
       };
       profiles = [defaultProfile];
       setProfiles(profiles);
       setActiveProfileId(defaultProfile.id);
-
-      fetch('assets/schedule.json?v=' + Date.now())
-        .then(res => res.json())
-        .then(data => {
-          const tpl = data.templates && data.templates['КІБ-25011б'];
-          if (tpl) {
-            defaultProfile.numerator = JSON.parse(JSON.stringify(tpl.numerator));
-            defaultProfile.denominator = JSON.parse(JSON.stringify(tpl.denominator));
-            setProfiles([defaultProfile]);
-            setDB(defaultProfile.numerator, defaultProfile.denominator);
-            renderSchedule();
-            updateProfileUI();
-          }
-        })
-        .catch(err => console.warn('Could not auto-load initial template:', err));
     } else {
       // Deduplicate profiles by name if duplicates were created during testing
       const uniqueProfiles = [];
@@ -507,6 +492,100 @@ document.addEventListener('DOMContentLoaded', () => {
         renderSchedule();
       }
     });
+
+    const exportScheduleBtn = document.getElementById('exportScheduleBtn');
+    if (exportScheduleBtn) {
+      exportScheduleBtn.addEventListener('click', () => {
+        const profile = getActiveProfile();
+        if (!profile) return;
+        
+        const data = {
+          numerator: profile.numerator,
+          denominator: profile.denominator
+        };
+        const jsonStr = JSON.stringify(data, null, 2);
+        const blob = new Blob([jsonStr], { type: 'application/json' });
+        const fileName = `schedule_${profile.name.replace(/[^a-z0-9а-яіїєґ]/gi, '_')}.json`;
+        
+        function fallbackDownload(b, fName) {
+          const url = URL.createObjectURL(b);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = fName;
+          document.body.appendChild(a);
+          a.click();
+          setTimeout(() => {
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+          }, 100);
+        }
+        
+        if (navigator.canShare) {
+          const file = new File([blob], fileName, { type: 'application/json' });
+          if (navigator.canShare({ files: [file] })) {
+            navigator.share({
+              files: [file],
+              title: `Розклад ${profile.name}`,
+              text: 'Локальний розклад'
+            }).catch(err => {
+              console.error('Share failed:', err);
+              fallbackDownload(blob, fileName);
+            });
+          } else {
+            fallbackDownload(blob, fileName);
+          }
+        } else {
+          fallbackDownload(blob, fileName);
+        }
+      });
+    }
+
+    const importScheduleBtn = document.getElementById('importScheduleBtn');
+    const importScheduleInput = document.getElementById('importScheduleInput');
+    
+    if (importScheduleBtn && importScheduleInput) {
+      importScheduleBtn.addEventListener('click', () => {
+        importScheduleInput.click();
+      });
+      
+      importScheduleInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          try {
+            const data = JSON.parse(event.target.result);
+            if (data.numerator && data.denominator) {
+              const profile = getActiveProfile();
+              if (profile) {
+                if (confirm(`Імпортувати розклад у поточний профіль "${profile.name}"? Усі існуючі пари будуть перезаписані.`)) {
+                  setDB(data.numerator, data.denominator);
+                  
+                  const profiles = getProfiles();
+                  const idx = profiles.findIndex(p => p.id === profile.id);
+                  if (idx !== -1) {
+                    profiles[idx].numerator = data.numerator;
+                    profiles[idx].denominator = data.denominator;
+                    setProfiles(profiles);
+                  }
+                  renderSchedule();
+                  alert('Розклад успішно імпортовано!');
+                }
+              }
+            } else {
+              alert('Невірний формат файлу розкладу.');
+            }
+          } catch (err) {
+            console.error('Import parse error:', err);
+            alert('Помилка читання файлу (невірний JSON).');
+          }
+          importScheduleInput.value = '';
+        };
+        reader.readAsText(file);
+      });
+    }
+
 
     const loadTemplateBtn = document.getElementById('loadTemplateBtn');
     if (loadTemplateBtn) {
