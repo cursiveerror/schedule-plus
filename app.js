@@ -498,7 +498,7 @@ document.addEventListener('DOMContentLoaded', () => {
       enablePushBtn.addEventListener('click', async () => {
         // УВАГА: ЗАМІНІТЬ ЦЕ НА ВАШ PUBLIC KEY
         const PUBLIC_VAPID_KEY = 'BO6yfOA8xe7qHUIPCh7LeMXNSH-D6Cc_2i_sgN4SJV3nLQDsplIN1LJB7iPWuEmje1hPoX4BE08a_CVAGgqYCeM';
-        const SERVER_URL = 'http://158.178.148.193:3000'; // IP вашого сервера Oracle
+        const SERVER_URL = 'https://schedule-plus.pp.ua'; // Ваш новий домен
 
         if (PUBLIC_VAPID_KEY === 'BO6yfOA8xe7qHUIPCh7LeMXNSH-D6Cc_2i_sgN4SJV3nLQDsplIN1LJB7iPWuEmje1hPoX4BE08a_CVAGgqYCeM') {
           alert('Спочатку додайте ваш Public VAPID Key у файл app.js (рядок ~500)!');
