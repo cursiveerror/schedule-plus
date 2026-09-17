@@ -1,9 +1,21 @@
-const CACHE_NAME = 'schedule-plus-v1.4';
+const CACHE_NAME = 'schedule-plus-v1.5';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
-  './style.css',
-  './app.js',
+  './css/variables.css',
+  './css/base.css',
+  './css/layout.css',
+  './css/components.css',
+  './css/modals.css',
+  './js/api.js',
+  './js/events.js',
+  './js/main.js',
+  './js/notifications.js',
+  './js/state.js',
+  './js/storage.js',
+  './js/theme.js',
+  './js/ui.js',
+  './js/utils.js',
   './manifest.json',
   './assets/schedule.json',
   './assets/schedule-plus.svg'

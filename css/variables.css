@@ -1,0 +1,49 @@
+:root {
+  /* Colors - Light Theme */
+  --color-accent: #FF9500;
+  --color-accent-hover: #E08300;
+  --color-accent-light: #FFF4E5;
+  --color-accent-gradient: linear-gradient(135deg, #FF9F0A, #FF7000);
+  --color-accent-glow: rgba(255, 149, 0, 0.3);
+  
+  --color-carbon: #1d1d1f;
+  --color-frost: #f5f5f7;       /* App container background */
+  --color-desktop-bg: #e5e5ea;  /* Surrounding page background */
+  --color-ice: #f4f8fb;
+  --color-smoke: #333333;
+  --color-graphite: #474747;
+  --color-ash: #6e6e73;
+  --color-mist: rgba(0, 0, 0, 0.07);
+  --color-pebble: #ebebec;
+  --color-surface: #ffffff;
+  
+  --color-active-tab-bg: #ffffff;
+  --color-active-tab-text: #1d1d1f;
+  
+  /* Typography */
+  --font-main: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+
+[data-theme="dark"] {
+  /* Colors - Dark Theme */
+  --color-accent: #FF9F0A;
+  --color-accent-hover: #E08C09;
+  --color-accent-light: #331E02;
+  --color-accent-gradient: linear-gradient(135deg, #FFB340, #FF8C00);
+  --color-accent-glow: rgba(255, 159, 10, 0.25);
+  
+  --color-carbon: #f5f5f7;
+  --color-frost: #000000;
+  --color-desktop-bg: #121212;
+  --color-ice: #1c1c1e;
+  --color-smoke: #d2d2d7;
+  --color-graphite: #a1a1a6;
+  --color-ash: #8e8e93;
+  --color-mist: rgba(255, 255, 255, 0.1);
+  --color-pebble: #1c1c1e;
+  --color-surface: #141415;
+  
+  --color-active-tab-bg: #636366;
+  --color-active-tab-text: #ffffff;
+}
+

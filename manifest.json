@@ -1,7 +1,7 @@
 {
   "name": "Розклад+",
   "short_name": "Розклад+",
-  "description": "Зручний розклад занять та швидкий доступ до Google Meet онлайн.",
+  "description": "Розклад, але краще.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
