@@ -122,6 +122,37 @@
   color: var(--color-carbon);
 }
 
+.editor-classes-body::-webkit-scrollbar-thumb {
+  background-color: var(--color-mist);
+  border-radius: 4px;
+}
+
+/* Editor Copy Button */
+.editor-copy-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  padding: 0 16px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  background-color: var(--color-pebble);
+  color: var(--color-carbon);
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.15s ease;
+  font-family: inherit;
+}
+
+.editor-copy-btn:hover {
+  background-color: var(--color-mist);
+}
+
+.editor-copy-btn:active {
+  transform: scale(0.96);
+}
+
 .group-modal-body {
   padding: 16px 20px 24px;
   display: flex;

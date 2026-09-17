@@ -238,28 +238,26 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  max-width: 65%;
+  flex: 1; /* Allow it to take up remaining space */
   line-height: 1.35;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* Meet Button */
+/* Meet Button - Circular */
 .meet-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
   background: var(--color-accent-gradient);
   color: #ffffff;
   text-decoration: none;
-  font-size: 13px;
-  font-weight: 600;
-  padding: 7px 14px;
-  border-radius: 10px;
+  border-radius: 50%;
   box-shadow: 0 4px 12px var(--color-accent-glow);
   transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.2s ease, filter 0.2s ease;
-  white-space: nowrap;
 }
 
 .meet-btn:hover {
@@ -272,7 +270,7 @@
 }
 
 .meet-btn i {
-  font-size: 15px;
+  font-size: 18px;
 }
 
 

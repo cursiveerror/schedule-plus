@@ -74,7 +74,7 @@ export function updateProfileUI() {
   const profile = getActiveProfile();
   const pName = profile ? profile.name : 'Мій розклад';
   profileNameSpans.forEach(el => el.textContent = pName);
-  
+
   const profileNameInput = document.getElementById('profileNameInput');
   if (profileNameInput && profile) {
     profileNameInput.value = profile.name;
@@ -98,7 +98,7 @@ export function createClassCardHtml(cls, isLive = false, showLiveBadge = false, 
 
   let locationHTML = '';
   if (asEditor) {
-     locationHTML = `
+    locationHTML = `
       <div class="class-location">
         <i class="ph ph-map-pin"></i>
         <span>${cls.location || '-'}</span>
@@ -116,7 +116,7 @@ export function createClassCardHtml(cls, isLive = false, showLiveBadge = false, 
       locationHTML = `
         <div class="class-location dist" title="Дистанційно">
           <i class="ph ph-laptop"></i>
-          <span>Дистант</span>
+          <span>Дистанційно</span>
         </div>
       `;
     }
@@ -127,9 +127,8 @@ export function createClassCardHtml(cls, isLive = false, showLiveBadge = false, 
     const cleanLink = (cls.link || '').trim();
     if (cleanLink && cleanLink !== '#' && cleanLink !== 'about:blank') {
       meetBtnHTML = `
-        <a href="${cleanLink}" target="_blank" rel="noopener noreferrer" class="meet-btn">
+        <a href="${cleanLink}" target="_blank" rel="noopener noreferrer" class="meet-btn" title="Перейти на пару">
           <i class="ph ph-video-camera"></i>
-          Перейти
         </a>
       `;
     }
@@ -206,14 +205,14 @@ export function renderSchedule() {
       filteredSchedule.forEach((cls, index) => {
         let live = false;
         if (isToday) {
-           live = isClassLive(cls.pair);
+          live = isClassLive(cls.pair);
         }
 
         const card = document.createElement('div');
         card.className = `class-card ${live ? 'is-live' : ''}`;
         card.dataset.pair = cls.pair;
         card.style.animationDelay = `${index * 0.06}s`;
-        
+
         card.innerHTML = createClassCardHtml(cls, live, true, false);
         classesDiv.appendChild(card);
       });
@@ -227,7 +226,7 @@ export function renderSchedule() {
 export function updateLiveStatus() {
   const now = new Date();
   const todayDayOfWeek = now.getDay();
-  
+
   // Знаходимо колонку сьогоднішнього дня
   const todayColumn = document.querySelector(`.day-column[data-day="${todayDayOfWeek}"]`);
   if (!todayColumn) return;
@@ -238,7 +237,7 @@ export function updateLiveStatus() {
     const pairNumber = parseInt(card.dataset.pair);
     const live = isClassLive(pairNumber);
     const hasLiveClass = card.classList.contains('is-live');
-    
+
     // Якщо пара почалася, але плашки ще немає
     if (live && !hasLiveClass) {
       card.classList.add('is-live');
@@ -247,7 +246,7 @@ export function updateLiveStatus() {
         const badgeHTML = `<div class="live-badge"><div class="live-dot"></div>Зараз</div>`;
         badgesContainer.insertAdjacentHTML('afterbegin', badgeHTML);
       }
-    } 
+    }
     // Якщо пара закінчилася, а плашка ще є
     else if (!live && hasLiveClass) {
       card.classList.remove('is-live');
@@ -298,7 +297,7 @@ export function renderProfilesList() {
         if (!confirm(`Ви дійсно бажаєте видалити розклад "${p.name}"?`)) return;
         let projs = getProfiles();
         projs = projs.filter(x => x.id !== p.id);
-        
+
         setProfiles(projs);
         if (getActiveProfileId() === p.id && projs.length > 0) {
           setActiveProfileId(projs[0].id);
